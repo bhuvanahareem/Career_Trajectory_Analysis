@@ -1,10 +1,11 @@
 import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+import re
 import json
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
 
-# Fix for the Windows crash you saw earlier
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 
 class CareerPredictor:
     def __init__(self):
@@ -87,11 +88,24 @@ predictor_instance = CareerPredictor()
 def extract_skills_from_text(text):
     found_skills = set()
     text_lower = text.lower()
+    
     for category in predictor_instance.skills_db.values():
         for tier in ["beginner", "compulsory", "intermediate", "advanced"]:
-            for skill in category.get(tier, []):
-                if skill.lower() in text_lower:
-                    found_skills.add(skill)
+            for skill_entry in category.get(tier, []):
+                # --- NEW LOGIC: Split grouped skills by '/' ---
+                # This turns "Python/Scala" into ["Python", "Scala"]
+                individual_skills = [s.strip() for s in skill_entry.split('/')]
+                
+                for skill in individual_skills:
+                    # Look for the skill as a standalone word (using regex for accuracy)
+                    # This ensures "Java" doesn't match inside "JavaScript"
+                    pattern = r'\b' + re.escape(skill.lower()) + r'\b'
+                    if re.search(pattern, text_lower):
+                        # We add the original group name (e.g., "Python/Scala") 
+                        # so the roadmap stays consistent with your JSON
+                        found_skills.add(skill_entry)
+                        break # Move to next skill_entry once a match is found
+                        
     return list(found_skills)
 
 def analyze_skill_gap(resume_skills, target_domain):
