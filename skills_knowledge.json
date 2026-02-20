@@ -1,0 +1,163 @@
+{
+  "Frontend Developer": {
+    "beginner": ["HTML", "CSS", "JavaScript"],
+    "compulsory": ["Git/GitHub/GitLab"],
+    "intermediate": ["Bootstrap", "React", "REST APIs", "Tailwind CSS"],
+    "advanced": ["Next.js", "TypeScript", "Redux/Zustand"],
+    "next_steps": ["Performance Optimization", "Web Security Basics", "System Design Basics", "Backend Developer"]
+  },
+  "Backend Developer": {
+    "beginner": ["HTML", "CSS", "JavaScript", "Java/Python/Node.js", "OOP", "MySQL/SQL/NoSQL/PostgreSQL/MongoDB"],
+    "compulsory": ["Git/GitHub/GitLab", "REST APIs", "Database Design"],
+    "intermediate": ["Spring Boot/Express/Django", "JWT/OAuth", "Redis/Memcached"],
+    "advanced": ["Microservices", "Kafka/RabbitMQ", "System Design"],
+    "next_steps": ["AWS/GCP/Azure", "Docker/Kubernetes", "Full Stack Developer"]
+  },
+  "Full Stack Developer": {
+    "beginner": ["HTML", "CSS", "JavaScript", "Java/Python/Node.js"],
+    "compulsory": ["Git/GitHub/GitLab", "REST APIs", "MySQL/SQL/NoSQL/PostgreSQL/MongoDB"],
+    "intermediate": ["React/Angular/Vue", "Node.js/Spring Boot", "WT/OAuth"],
+    "advanced": ["Next.js/Nuxt", "Microservices", "CI/CD"],
+    "next_steps": ["System Design", "Cloud Deployment", "Scalability Patterns", "DevOps Engineer"]
+  },
+  "DevOps Engineer": {
+    "beginner": ["Linux", "Networking ", "Git/GitHub/GitLab"],
+    "compulsory": ["Shell Scripting", "Jenkins", "Docker"],
+    "intermediate": ["Kubernetes", "Terraform", "Prometheus/Grafana"],
+    "advanced": ["AWS/GCP/Azure", "SRE"],
+    "next_steps": ["DevSecOps Engineer"]
+  },
+  "DevSecOps Engineer": {
+    "beginner": ["Linux", "Networking", "Security"],
+    "compulsory": ["CI/CD", "Docker"],
+    "intermediate": ["Kubernetes", "IAM"],
+    "advanced": ["Zero Trust Architecture", "Threat Modeling", "Compliance Automation"],
+    "next_steps": ["Cloud Security", "Advanced Pen Testing", "Security Automation Pipelines"]
+  },
+  "Data Analyst": {
+    "beginner": ["Excel", "Statistics", "MySQL/SQL/PostgreSQL"],
+    "compulsory": ["Pandas/NumPy/MatplotLib", "Data Cleaning", "Data Visualization"],
+    "intermediate": ["Power BI/Tableau", "Exploratory Data Analysis/EDA", "Business Metrics"],
+    "advanced": ["Predictive Analytics", "A/B Testing", "Dashboard Optimization"],
+    "next_steps": ["Machine Learning", "Data Engineering"]
+  },
+  "AI Engineer": {
+    "beginner": ["Python", "Linear Algebra", "Probability"],
+    "compulsory": ["NumPy/Pandas", "Scikit-learn", "Model Evaluation"],
+    "intermediate": ["TensorFlow/PyTorch", "NLP/Natural Language Processing/Computer Vision Basics", "API Deployment"],
+    "advanced": ["Transformers/LLMs", "Model Optimization", "Distributed Training"],
+    "next_steps": ["MLOps","Scalable AI Systems"]
+  },
+  "AI and Data Scientist": {
+    "beginner": ["Python", "Statistics", "MySQL/SQL/PostgreSQL"],
+    "compulsory": ["Data Cleaning", "EDA/Exploratory Data Analysis", "Machine Learning"],
+    "intermediate": ["Feature Engineering", "Deep Learning", "Experiment Tracking"],
+    "advanced": ["Advanced NLP/Natural Language Model/CV/Computer Vision", "Reinforcement Learning", "Research-Level Modeling"],
+    "next_steps": ["MLOps", "Hadoop/ Kafka/Spark", "AI Ethics"]
+  },
+  "Data Engineer": {
+    "beginner": ["Python/Scala", "MySQL/SQL/PostgreSQL", "Data Warehousing Basics"],
+    "compulsory": ["ETL Pipelines", "Apache Spark", "Data Modeling"],
+    "intermediate": ["Airflow", "Kafka", "Cloud Data Services"],
+    "advanced": ["Real-Time Data Processing", "Data Lake Architecture", "Distributed Systems"],
+    "next_steps": ["MLOps Integration", "Cost Optimization", "Scalable Architecture Design"]
+  },
+  "Android Developer": {
+    "beginner": ["Java/Kotlin/Flutter", "OOP", "Android Studio"],
+    "compulsory": ["Activity Lifecycle", "UI Design", "REST API Integration"],
+    "intermediate": ["Jetpack Components", "Firebase", "MVVM Architecture"],
+    "advanced": ["Performance Optimization", "Security Best Practices", "Modular Architecture"],
+    "next_steps": ["Flutter", "App Scaling", "CI/CD"]
+  },
+  "iOS Developer": {
+    "beginner": ["Swift/C-Component", "Xcode", "OOP"],
+    "compulsory": ["UIKit/SwiftUI", "App Lifecycle", "Networking"],
+    "intermediate": ["Core Data", "MVVM", "Firebase"],
+    "advanced": ["Performance Optimization", "App Security", "Scalable Architecture"],
+    "next_steps": ["Flutter/React Native", "CI/CD", "Advanced Animations"]
+  },
+  "Machine Learning": {
+    "beginner": ["Python", "Linear Algebra", "Statistics"],
+    "compulsory": ["SupervisedLearning/Unsupervised Learning", "Scikit-learn", "Model Evaluation"],
+    "intermediate": ["Feature Engineering", "Deep Learning", "Model Tuning"],
+    "advanced": ["Transformers", "Reinforcement Learning", "Distributed ML"],
+    "next_steps": ["MLOps", "Real-World Deployment"]
+  },
+  "Blockchain Developer": {
+    "beginner": ["Blockchain", "Cryptography", "Solidity"],
+    "compulsory": ["Smart Contracts", "Ethereum", "Web3.js"],
+    "intermediate": ["DeFi", "IPFS", "Hardhat/Truffle"],
+    "advanced": ["Layer 2 Solutions", "Security Auditing", "Cross-Chain Protocols"],
+    "next_steps": ["Zero-Knowledge Proofs", "Tokenomics", "Blockchain Scalability"]
+  },
+  "QA (Quality Assurance)": {
+    "beginner": ["Software Testing Basics", "SDLC/STLC", "Manual Testing"],
+    "compulsory": ["Test Case Writing", "Bug Tracking Tools", "API Testing"],
+    "intermediate": ["Selenium/Cypress", "Automation Frameworks", "Performance Testing"],
+    "advanced": ["CI/CD Integration", "Security Testing", "Test Architecture Design"],
+    "next_steps": ["DevOps Knowledge", "Cloud Testing", "AI in Testing"]
+  },
+  "Software Architect": {
+    "beginner": ["OOP/Design Principles", "Data Structures/DSA"],
+    "compulsory": ["Design Patterns", "System Design", "Database Architecture"],
+    "intermediate": ["Microservices", "Cloud Architecture", "Scalability Patterns"],
+    "advanced": ["Distributed Systems", "Event-Driven Architecture", "High Availability Design"],
+    "next_steps": ["Leadership Skills", "Enterprise Architecture", "Cost & Risk Management"]
+  },
+  "Cyber Security": {
+    "beginner": ["Networking", "Linux", "Security"],
+    "compulsory": ["OWASP /Top 10", "Cryptography", "Firewalls"],
+    "intermediate": ["Penetration Testing", "SIEM Tools", "Incident Response"],
+    "advanced": ["Red Teaming", "Cloud Security", "Threat Hunting"],
+    "next_steps": ["CEH/OSCP", "Bug Bounty", "Security Research"]
+  },
+  "UX Designer": {
+    "beginner": ["Adobe", "Figma"],
+    "compulsory": ["Wireframing", "Prototyping", "Usability Testing"],
+    "intermediate": ["Interaction Design", "Design Systems", "Accessibility"],
+    "advanced": ["Blender","UX Strategy", "Behavioral Psychology", "Data-Driven Design"],
+    "next_steps": ["Product Thinking", "Advanced Prototyping", "UX Leadership"]
+  },
+  "Technical Writer": {
+    "beginner": ["Writing Skills", "Grammar", "Markdown"],
+    "compulsory": ["API Documentation", "Git", "Information Architecture"],
+    "intermediate": ["Docs-as-Code", "Swagger/OpenAPI", "Content Strategy"],
+    "advanced": ["Developer Experience/DX)/", "Automation Tools", "Technical Editing"],
+    "next_steps": ["UX Writing", "Product Documentation Strategy", "Knowledge Management Systems"]
+  },
+  "Game Developer": {
+    "beginner": ["C#/C++", "OOP", "Game Design"],
+    "compulsory": ["Unity/Unreal Engine", "Physics Engines", "Version Control"],
+    "intermediate": ["Blender","Multiplayer Networking", "3D Graphics Basics", "AI for Games"],
+    "advanced": ["Game Optimization", "Shader Programming", "Game Architecture"],
+    "next_steps": ["AR Development/VR Development", "OpenGL/DirectX", "Game Monetization"]
+  },
+  "MLOps Engineer": {
+    "beginner": ["Python", "Machine Learning", "Linux"],
+    "compulsory": ["Docker", "CI/CD", "Model Deployment"],
+    "intermediate": ["Kubernetes", "MLflow", "Monitoring Models"],
+    "advanced": ["Distributed ML Systems", "Feature Stores", "ML Pipelines"],
+    "next_steps": ["Cloud Certifications", "AI Infrastructure Optimization", "Large-Scale AI Systems"]
+  },
+  "Product Manager": {
+    "beginner": ["Product Lifecycle/SDLC", "Market Research", "Communication"],
+    "compulsory": ["Requirement Gathering", "Agile/Scrum", "Roadmapping"],
+    "intermediate": ["Stakeholder Management", "User Analytics"],
+    "advanced": ["Product Strategy", "Growth Metrics"],
+    "next_steps": ["Leadership Skills", "Technical Understanding", "Business Strategy"]
+  },
+  "Engineering Manager": {
+    "beginner": ["Software Development/SDLC", "Communication", "Team Collaboration"],
+    "compulsory": ["Agile Methodologies", "Code Review Practices", "Hiring/Onboarding"],
+    "intermediate": ["Project Management", "Performance Reviews", "Conflict Resolution"],
+    "advanced": ["Organizational Strategy", "Scaling Teams", "Technical Vision"],
+    "next_steps": ["Executive Communication", "Business Acumen", "Cross-Functional Leadership"]
+  },
+  "BI Analyst": {
+    "beginner": ["Excel", "SQL/MySQL/PostgreSQL", "Statistics"],
+    "compulsory": ["Power BI/Tableau", "Data Cleaning", "Dashboard Creation"],
+    "intermediate": ["Data Modeling", "DAX", "Business KPIs"],
+    "advanced": ["Data Warehousing", "Predictive Insights", "Advanced Visualization"],
+    "next_steps": ["Data Engineering", "Machine Learning", "Business Strategy/Product Management"]
+  }
+}
