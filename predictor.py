@@ -85,7 +85,19 @@ class CareerPredictor:
         roadmap += '  style Start fill:#ACC8A2,stroke:#1A2517\n'
         roadmap += '  style Goal fill:#1A2517,stroke:#ACC8A2,color:#fff\n'
 
-        # 6. Multi-Path Analysis: Find alternative domain with > 30% match
+        # 6. Missing Skills by Tier (FOR WAVY ROADMAP)
+        def get_missing_in_tier(tier_name, data_dict):
+            tier_skills = data_dict.get(tier_name, [])
+            return [s for s in tier_skills if s.lower() not in resume_skills_lower]
+
+        missing_by_tier = {
+            "beginner": get_missing_in_tier("beginner", target_data),
+            "compulsory": get_missing_in_tier("compulsory", target_data),
+            "intermediate": get_missing_in_tier("intermediate", target_data),
+            "advanced": get_missing_in_tier("advanced", target_data)
+        }
+
+        # 7. Multi-Path Analysis: Find alternative domain with > 30% match
         best_alt = None
         max_alt_score = 30
         
@@ -105,6 +117,16 @@ class CareerPredictor:
 
         alt_data = self.skills_db.get(best_alt, {}) if best_alt else {}
         
+        # Missing skills for Alt Roadmap
+        alt_missing_by_tier = {}
+        if best_alt:
+            alt_missing_by_tier = {
+                "beginner": get_missing_in_tier("beginner", alt_data),
+                "compulsory": get_missing_in_tier("compulsory", alt_data),
+                "intermediate": get_missing_in_tier("intermediate", alt_data),
+                "advanced": get_missing_in_tier("advanced", alt_data)
+            }
+
         return {
             "score": score,
             "status_text": status_text,
@@ -112,14 +134,10 @@ class CareerPredictor:
             "master_msg": master_msg,
             "found_skills": found,
             "missing_skills": missing,
-            "roadmap": roadmap,
+            "roadmap": roadmap, # Keep for safety/legacy
+            "missing_by_tier": missing_by_tier,
             "alt_domain": best_alt,
-            "alt_roadmap_levels": {
-                "beginner": alt_data.get("beginner", []),
-                "compulsory": alt_data.get("compulsory", []),
-                "intermediate": alt_data.get("intermediate", []),
-                "advanced": alt_data.get("advanced", [])
-            }
+            "alt_missing_by_tier": alt_missing_by_tier
         }
 
 # Bridge for your existing app.py/server

@@ -67,8 +67,9 @@ def analyze_career():
         'found_skills': analysis['found_skills'],
         'missing_skills': analysis['missing_skills'],
         'roadmap': analysis['roadmap'],
+        'missing_by_tier': analysis['missing_by_tier'],
         'alt_domain': analysis['alt_domain'],
-        'alt_roadmap_levels': analysis['alt_roadmap_levels']
+        'alt_missing_by_tier': analysis.get('alt_missing_by_tier', {})
     })
 
 # --- SERVE FRONTEND (STRICTLY NO JINJA) ---

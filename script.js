@@ -236,43 +236,17 @@ function displayResults(data) {
         if (!extRoadmap) {
             extRoadmap = document.createElement('div');
             extRoadmap.id = 'externalAltRoadmap';
-            extRoadmap.style.cssText = "margin-top: 20px; padding: 20px; display: none; width: 100%; text-align: center; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid var(--primary-sage);";
+            extRoadmap.className = 'wavy-roadmap-section';
+            extRoadmap.style.display = 'none';
             alternativeCareer.after(extRoadmap);
         }
 
-        // 6. Alternative Roadmap Click Handler (using event delegation on resultsSection)
+        // 6. Alternative Roadmap Click Handler
         resultsSection.onclick = function (event) {
             if (event.target && event.target.id === 'exploreAltBtn') {
-                const levels = data.alt_roadmap_levels || {};
-                const beginner = levels.beginner || [];
-                const compulsory = levels.compulsory || [];
-                const intermediate = levels.intermediate || [];
-                const advanced = levels.advanced || [];
-
-                let altSyntax = `graph TD
-                    Start((Start)) --> B["<b>Beginner</b><br/>${beginner.length > 0 ? beginner.slice(0, 3).join(', ') : 'Foundations'}"]
-                    B --> C["<b>Compulsory</b><br/>${compulsory.length > 0 ? compulsory.slice(0, 3).join(', ') : 'Core Tools'}"]
-                    C --> I["<b>Intermediate</b><br/>${intermediate.length > 0 ? intermediate.slice(0, 3).join(', ') : 'Advanced Logic'}"]
-                    I --> A["<b>Advanced</b><br/>${advanced.length > 0 ? advanced.slice(0, 2).join(', ') : 'Expertise'}"]
-                    A --> Goal((${data.alt_domain}))
-                    
-                    style Start fill:#ACC8A2,stroke:#1A2517
-                    style Goal fill:#1A2517,stroke:#ACC8A2,color:#fff
-                    style B fill:#E8EDE0,stroke:#1A2517,color:#1A2517
-                    style C fill:#E8EDE0,stroke:#1A2517,color:#1A2517
-                    style I fill:#E8EDE0,stroke:#1A2517,color:#1A2517
-                    style A fill:#E8EDE0,stroke:#1A2517,color:#1A2517`;
-
                 extRoadmap.style.display = 'block';
-                const uniqueId = 'svg_' + Date.now();
-
-                mermaid.render(uniqueId, altSyntax).then((result) => {
-                    extRoadmap.innerHTML = `<h3 class="section-title">Roadmap for ${data.alt_domain}</h3>` + result.svg;
-                    extRoadmap.scrollIntoView({ behavior: 'smooth' });
-                }).catch(err => {
-                    console.error("Mermaid Render Error:", err);
-                });
-
+                renderWavyRoadmap(data.alt_missing_by_tier, data.alt_domain, 'externalAltRoadmap');
+                extRoadmap.scrollIntoView({ behavior: 'smooth' });
                 event.target.style.display = 'none';
             }
         };
@@ -283,7 +257,7 @@ function displayResults(data) {
     }
 
     // 7. Render Primary Roadmap
-    renderRoadmap(data.roadmap, domainInput.value.trim());
+    renderWavyRoadmap(data.missing_by_tier, domainInput.value.trim(), 'mermaidContainer');
 }
 
 function updateScoreCircle(score) {
@@ -352,17 +326,94 @@ function createSkillChart(foundCount, missingCount) {
     });
 }
 
-function renderRoadmap(mermaidSyntax, domain) {
-    roadmapTitle.textContent = `Strategic Path: ${domain}`;
-    mermaidContainer.innerHTML = '';
+function renderWavyRoadmap(missingByTier, domain, containerId) {
+    const container = document.getElementById(containerId);
 
-    const id = 'roadmap-' + Date.now();
-    mermaid.render(id, mermaidSyntax).then((result) => {
-        mermaidContainer.innerHTML = result.svg;
-    }).catch((error) => {
-        console.error('Mermaid error:', error);
-        mermaidContainer.innerHTML = '<p>Unable to render AI roadmap.</p>';
+    // Set title if it's the main roadmap container
+    if (containerId === 'mermaidContainer') {
+        roadmapTitle.textContent = `Strategic Path: ${domain}`;
+    }
+
+    container.innerHTML = '';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'roadmap-wrapper';
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute('class', 'wavy-road-svg');
+    svg.setAttribute('width', '1800');
+    svg.setAttribute('height', '400');
+    svg.setAttribute('viewBox', '0 0 1800 400');
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    // Generate a wavy path: Start at 200, wave between 50 and 350
+    let d = "M 0 200";
+    for (let i = 0; i < 6; i++) {
+        const x1 = i * 300 + 150;
+        const y1 = (i % 2 === 0) ? 50 : 350;
+        const x2 = (i + 1) * 300;
+        const y2 = 200;
+        d += ` Q ${x1} ${y1} ${x2} ${y2}`;
+    }
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#ACC8A2');
+    path.setAttribute('stroke-width', '14');
+    path.setAttribute('stroke-dasharray', '20,15');
+    path.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(path);
+    wrapper.appendChild(svg);
+
+    const nodesContainer = document.createElement('div');
+    nodesContainer.className = 'nodes-container';
+
+    const tierKeys = ['beginner', 'compulsory', 'intermediate', 'advanced'];
+    const nodeLabels = ['Start', 'Beginner', 'Compulsory', 'Intermediate', 'Advanced', 'Goal'];
+
+    nodeLabels.forEach((label, index) => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'wavy-node';
+
+        const x = index * 300;
+        nodeEl.style.left = `${x}px`;
+
+        if (label === 'Start') {
+            nodeEl.classList.add('node-start');
+            nodeEl.innerHTML = '<span>YOU</span>';
+        } else if (label === 'Goal') {
+            nodeEl.classList.add('node-goal');
+            nodeEl.innerHTML = `<span>Goal: ${domain}</span>`;
+        } else {
+            const tierKey = tierKeys[index - 1];
+            const missing = (missingByTier && missingByTier[tierKey]) ? missingByTier[tierKey] : [];
+            const isAchieved = missing.length === 0;
+
+            if (isAchieved) nodeEl.classList.add('achieved');
+            nodeEl.textContent = index;
+
+            const content = document.createElement('div');
+            // Toggle top/bottom to match the wave
+            content.className = `node-content ${index % 2 !== 0 ? 'top' : 'bottom'}`;
+            content.innerHTML = `
+                <div class="tier-title">${label}</div>
+                <div class="tier-skills">
+                    <strong>${isAchieved ? 'ACHIEVED' : 'TARGET SKILLS'}</strong>
+                    ${isAchieved ? '✓ All skills mastered' : missing.join(' • ')}
+                </div>
+            `;
+            nodeEl.appendChild(content);
+
+            const tierLabel = document.createElement('div');
+            tierLabel.className = 'node-label';
+            tierLabel.textContent = label;
+            nodeEl.appendChild(tierLabel);
+        }
+
+        nodesContainer.appendChild(nodeEl);
     });
+
+    wrapper.appendChild(nodesContainer);
+    container.appendChild(wrapper);
 }
 
 // Reset handler
