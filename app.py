@@ -62,10 +62,13 @@ def analyze_career():
     return jsonify({
         'score': round(float(analysis['score']), 2),
         'status_text': analysis['status_text'],
+        'warning': analysis['warning'],
+        'master_msg': analysis['master_msg'],
         'found_skills': analysis['found_skills'],
         'missing_skills': analysis['missing_skills'],
         'roadmap': analysis['roadmap'],
-        'alt_domain': analysis['alt_domain']
+        'alt_domain': analysis['alt_domain'],
+        'alt_roadmap_levels': analysis['alt_roadmap_levels']
     })
 
 # --- SERVE FRONTEND (STRICTLY NO JINJA) ---

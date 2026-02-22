@@ -46,40 +46,80 @@ class CareerPredictor:
     def analyze(self, resume_skills, target_domain):
         # 1. Get the right skills from YOUR JSON
         category_key = self.get_best_category(target_domain)
-        target_data = self.skills_db[category_key]
+        target_data = self.skills_db.get(category_key, {})
         
-        # 2. Combine all tiers for a total skill list
-        all_required = (target_data.get("beginner", []) + 
-                        target_data.get("compulsory", []) + 
-                        target_data.get("intermediate", []) + 
-                        target_data.get("advanced", []))
+        # Helper to get all required skills for a category
+        def get_all_skills(data):
+            return (data.get("beginner", []) + 
+                    data.get("compulsory", []) + 
+                    data.get("intermediate", []) + 
+                    data.get("advanced", []))
+
+        all_required = get_all_skills(target_data)
         
-        # 3. Match against what was found in the resume
+        # 2. Match against what was found in the resume
         resume_skills_lower = [s.lower() for s in resume_skills]
         found = [s for s in all_required if s.lower() in resume_skills_lower]
         missing = [s for s in all_required if s.lower() not in resume_skills_lower]
         
-        # 4. Calculate proper score (No more fake 100%)
+        # 3. Calculate score
         score = (len(found) / len(all_required) * 100) if all_required else 0
         
-        # 5. Build Mermaid Roadmap (Matches your UI Container)
-        roadmap = "graph TD\n"
-        roadmap += f'  Start((You)) --> B["Beginner: {", ".join(target_data["beginner"][:2])}"]\n'
-        roadmap += f'  B --> I["Intermediate: {", ".join(target_data["intermediate"][:2])}"]\n'
-        roadmap += f'  I --> A["Advanced: {target_data["advanced"][0]}"]\n'
-        roadmap += f'  A --> Goal(({category_key}))\n'
+        # 4. Handle Tiers and Messages
+        status_text = f"Match Level: {round(score, 1)}%"
+        warning = ""
+        master_msg = ""
         
-        # Styling for your Sage Green UI
+        if score < 30:
+            warning = "you should work on yours skills"
+        elif score > 80:
+            next_step = target_data.get("next_steps", ["Engineering Leadership"])[0]
+            master_msg = f"You are a master in this field. Plan on taking the next step to the {next_step}"
+
+        # 5. Build Primary Mermaid Roadmap
+        roadmap = "graph TD\n"
+        roadmap += f'  Start((You)) --> B["Beginner: {", ".join(target_data.get("beginner", [])[:2])}"]\n'
+        roadmap += f'  B --> I["Intermediate: {", ".join(target_data.get("intermediate", [])[:2])}"]\n'
+        roadmap += f'  I --> A["Advanced: {target_data.get("advanced", ["Specialist"])[0]}"]\n'
+        roadmap += f'  A --> Goal(({category_key}))\n'
         roadmap += '  style Start fill:#ACC8A2,stroke:#1A2517\n'
         roadmap += '  style Goal fill:#1A2517,stroke:#ACC8A2,color:#fff\n'
 
+        # 6. Multi-Path Analysis: Find alternative domain with > 30% match
+        best_alt = None
+        max_alt_score = 30
+        
+        for domain, data in self.skills_db.items():
+            if domain == category_key:
+                continue
+            
+            domain_skills = get_all_skills(data)
+            if not domain_skills: continue
+            
+            match_count = sum(1 for s in domain_skills if s.lower() in resume_skills_lower)
+            alt_score = (match_count / len(domain_skills)) * 100
+            
+            if alt_score > max_alt_score:
+                max_alt_score = alt_score
+                best_alt = domain
+
+        alt_data = self.skills_db.get(best_alt, {}) if best_alt else {}
+        
         return {
             "score": score,
-            "status_text": f"Match Level: {round(score, 1)}%",
+            "status_text": status_text,
+            "warning": warning,
+            "master_msg": master_msg,
             "found_skills": found,
             "missing_skills": missing,
             "roadmap": roadmap,
-            "alt_domain": target_data.get("next_steps", ["Specialist"])[0]
+            "alt_domain": best_alt,
+            "alt_roadmap_levels": {
+                "beginner": alt_data.get("beginner", []),
+                "compulsory": alt_data.get("compulsory", []),
+                "intermediate": alt_data.get("intermediate", []),
+                "advanced": alt_data.get("advanced", [])
+            }
         }
 
 # Bridge for your existing app.py/server

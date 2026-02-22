@@ -1,6 +1,6 @@
 // Detect if running from Flask server or direct file access
-const API_BASE = window.location.protocol === 'file:' 
-    ? 'http://localhost:5000/api' 
+const API_BASE = window.location.protocol === 'file:'
+    ? 'http://localhost:5000/api'
     : '/api';
 
 // State management
@@ -32,12 +32,14 @@ const roadmapTitle = document.getElementById('roadmapTitle');
 const mermaidContainer = document.getElementById('mermaidContainer');
 const alternativeCareer = document.getElementById('alternativeCareer');
 const altDomain = document.getElementById('altDomain');
+const altTitle = document.getElementById('altTitle');
 const resetBtn = document.getElementById('resetBtn');
+const specialMessage = document.getElementById('specialMessage');
 
 let skillChart = null;
 
 // Initialize Mermaid
-mermaid.initialize({ 
+mermaid.initialize({
     startOnLoad: false,
     theme: 'default',
     themeVariables: {
@@ -111,7 +113,7 @@ async function processFile(file) {
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
             state.resumeSkills = data.skills;
             checkAnalyzeButton();
@@ -165,7 +167,7 @@ async function performAnalysis() {
         });
 
         const data = await response.json();
-        
+
         if (data.error) {
             throw new Error(data.error);
         }
@@ -180,34 +182,107 @@ async function performAnalysis() {
 }
 
 function displayResults(data) {
+    // Standard UI Transitions
     inputSection.style.display = 'none';
     resultsSection.style.display = 'block';
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // Update score display
+    // 1. Update Score and Status
     const score = data.score;
-    updateScoreCircle(score);
-    
-    // Logic Fix: Map Python 'status_text' to your UI status area
+    if (typeof updateScoreCircle === 'function') updateScoreCircle(score);
+
     scoreStatus.textContent = data.status_text;
-    scoreStatus.className = 'score-status ' + (score > 70 ? 'high' : score > 35 ? 'mid' : 'low');
+    scoreStatus.className = 'score-status ' + (score > 80 ? 'high' : score > 30 ? 'mid' : 'low');
 
-    // Update skills lists
-    updateSkillsList(foundSkills, data.found_skills, 'found');
-    updateSkillsList(missingSkills, data.missing_skills, 'missing');
-
-    // Create Chart
-    createSkillChart(data.found_skills.length, data.missing_skills.length);
-
-    // Logic Fix: Handle Alternative Careers (alt_domain)
-    if (score < 40 && data.alt_domain) {
-        altDomain.textContent = data.alt_domain;
-        alternativeCareer.style.display = 'block';
-    } else {
-        alternativeCareer.style.display = 'none';
+    // 2. Handle Master/Warning Messages
+    specialMessage.textContent = '';
+    specialMessage.className = 'special-message';
+    if (data.master_msg) {
+        specialMessage.textContent = data.master_msg;
+        specialMessage.classList.add('master');
+    } else if (data.warning) {
+        specialMessage.textContent = data.warning;
+        specialMessage.classList.add('warning');
     }
 
-    // Logic Fix: Render AI-Generated Roadmap directly
+    // 3. Update Skills Lists
+    updateSkillsList(foundSkills, data.found_skills, 'found');
+    updateSkillsList(missingSkills, data.missing_skills, 'missing');
+    if (typeof createSkillChart === 'function') createSkillChart(data.found_skills.length, data.missing_skills.length);
+
+    // 4. Alternative Domain Logic
+    if (data.alt_domain) {
+        altDomain.textContent = data.alt_domain;
+        alternativeCareer.style.display = 'block';
+
+        // Update Alt Title based on score
+        if (score < 30) {
+            altTitle.textContent = "Consider This Instead";
+        } else {
+            altTitle.textContent = "Other domains you might also be interested in";
+        }
+
+        // ONLY add the button if it doesn't exist to prevent duplicates
+        if (!document.getElementById('exploreAltBtn')) {
+            alternativeCareer.querySelector('.alt-card').insertAdjacentHTML('beforeend',
+                `<button id="exploreAltBtn" class="analyze-btn" style="margin-top: 15px; width: auto; padding: 10px 30px; display: block; margin-left: auto; margin-right: auto; cursor: pointer;">Explore Roadmap</button>`
+            );
+        } else {
+            document.getElementById('exploreAltBtn').style.display = 'block';
+        }
+
+        // 5. Create External Container (Outside the Black Box)
+        let extRoadmap = document.getElementById('externalAltRoadmap');
+        if (!extRoadmap) {
+            extRoadmap = document.createElement('div');
+            extRoadmap.id = 'externalAltRoadmap';
+            extRoadmap.style.cssText = "margin-top: 20px; padding: 20px; display: none; width: 100%; text-align: center; background: rgba(255,255,255,0.05); border-radius: 16px; border: 1px solid var(--primary-sage);";
+            alternativeCareer.after(extRoadmap);
+        }
+
+        // 6. Alternative Roadmap Click Handler (using event delegation on resultsSection)
+        resultsSection.onclick = function (event) {
+            if (event.target && event.target.id === 'exploreAltBtn') {
+                const levels = data.alt_roadmap_levels || {};
+                const beginner = levels.beginner || [];
+                const compulsory = levels.compulsory || [];
+                const intermediate = levels.intermediate || [];
+                const advanced = levels.advanced || [];
+
+                let altSyntax = `graph TD
+                    Start((Start)) --> B["<b>Beginner</b><br/>${beginner.length > 0 ? beginner.slice(0, 3).join(', ') : 'Foundations'}"]
+                    B --> C["<b>Compulsory</b><br/>${compulsory.length > 0 ? compulsory.slice(0, 3).join(', ') : 'Core Tools'}"]
+                    C --> I["<b>Intermediate</b><br/>${intermediate.length > 0 ? intermediate.slice(0, 3).join(', ') : 'Advanced Logic'}"]
+                    I --> A["<b>Advanced</b><br/>${advanced.length > 0 ? advanced.slice(0, 2).join(', ') : 'Expertise'}"]
+                    A --> Goal((${data.alt_domain}))
+                    
+                    style Start fill:#ACC8A2,stroke:#1A2517
+                    style Goal fill:#1A2517,stroke:#ACC8A2,color:#fff
+                    style B fill:#E8EDE0,stroke:#1A2517,color:#1A2517
+                    style C fill:#E8EDE0,stroke:#1A2517,color:#1A2517
+                    style I fill:#E8EDE0,stroke:#1A2517,color:#1A2517
+                    style A fill:#E8EDE0,stroke:#1A2517,color:#1A2517`;
+
+                extRoadmap.style.display = 'block';
+                const uniqueId = 'svg_' + Date.now();
+
+                mermaid.render(uniqueId, altSyntax).then((result) => {
+                    extRoadmap.innerHTML = `<h3 class="section-title">Roadmap for ${data.alt_domain}</h3>` + result.svg;
+                    extRoadmap.scrollIntoView({ behavior: 'smooth' });
+                }).catch(err => {
+                    console.error("Mermaid Render Error:", err);
+                });
+
+                event.target.style.display = 'none';
+            }
+        };
+    } else {
+        alternativeCareer.style.display = 'none';
+        const oldRoadmap = document.getElementById('externalAltRoadmap');
+        if (oldRoadmap) oldRoadmap.style.display = 'none';
+    }
+
+    // 7. Render Primary Roadmap
     renderRoadmap(data.roadmap, domainInput.value.trim());
 }
 
@@ -280,7 +355,7 @@ function createSkillChart(foundCount, missingCount) {
 function renderRoadmap(mermaidSyntax, domain) {
     roadmapTitle.textContent = `Strategic Path: ${domain}`;
     mermaidContainer.innerHTML = '';
-    
+
     const id = 'roadmap-' + Date.now();
     mermaid.render(id, mermaidSyntax).then((result) => {
         mermaidContainer.innerHTML = result.svg;

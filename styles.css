@@ -433,6 +433,30 @@ body {
     color: #059669;
 }
 
+.special-message {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    font-family: 'Playfair Display', serif;
+    min-height: 1.5em;
+    transition: all 0.3s ease;
+}
+
+.special-message.warning {
+    color: #d97706;
+    animation: pulse 2s infinite;
+}
+
+.special-message.master {
+    color: #059669;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
 /* Results Grid */
 .results-grid {
     display: grid;
