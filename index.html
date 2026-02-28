@@ -16,7 +16,9 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -58,7 +60,8 @@
 
                     <div class="drop-zone-content">
 
-                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
 
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
 
@@ -98,19 +101,8 @@
 
                 <div class="input-wrapper">
 
-                    <input
-
-                        type="text"
-
-                        id="domainInput"
-
-                        class="domain-input"
-
-                        placeholder="e.g., Data Scientist, Web Developer, ML Engineer..."
-
-                        autocomplete="off"
-
-                    >
+                    <input type="text" id="domainInput" class="domain-input"
+                        placeholder="e.g., Data Scientist, Web Developer, ML Engineer..." autocomplete="off">
 
                     <button class="analyze-btn" id="analyzeBtn" disabled>
 
@@ -213,7 +205,8 @@
 
                     <p class="alt-domain" id="altDomain"></p>
 
-                    <p class="alt-description">Your current skills align better with this domain. Explore the roadmap below.</p>
+                    <p class="alt-description">Your current skills align better with this domain. Explore the roadmap
+                        below.</p>
 
                 </div>
 
@@ -238,6 +231,49 @@
     </main>
 
 
+
+    <!-- Chatbot Widget -->
+    <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open career advisor chat">
+        <img src="Career_Advisor_Chatbot_icon.png" alt="Career Advisor" class="chatbot-toggle-icon" />
+        <span class="toggle-pulse"></span>
+    </button>
+
+    <div class="chatbot-panel" id="chatbotPanel">
+        <div class="chatbot-header">
+            <button class="chatbot-back-btn" id="chatbotBackBtn" aria-label="Go back" title="Undo last exchange"
+                disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M9 14L4 9l5-5" />
+                    <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+                </svg>
+            </button>
+            <div class="chatbot-header-info">
+                <span class="chatbot-title">Career Advisor</span>
+                <span class="chatbot-subtitle">AI-Powered Guidance</span>
+            </div>
+            <button class="chatbot-close-btn" id="chatbotCloseBtn" aria-label="Close chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="chatbot-messages" id="chatbotMessages"></div>
+
+        <div class="chatbot-input-bar">
+            <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Ask me about your career..."
+                autocomplete="off" />
+            <button class="chatbot-send-btn" id="chatbotSendBtn" aria-label="Send message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 

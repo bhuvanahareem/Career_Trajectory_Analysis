@@ -116,6 +116,10 @@ async function processFile(file) {
 
         if (data.success) {
             state.resumeSkills = data.skills;
+            // Store chatbot context extracted from resume
+            if (typeof chatbotContext !== 'undefined') {
+                chatbotContext = data.chatbotContext || null;
+            }
             checkAnalyzeButton();
         } else {
             throw new Error(data.error || 'Failed to process file');
@@ -438,3 +442,181 @@ function hideLoading() { loadingOverlay.style.display = 'none'; }
 domainInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !analyzeBtn.disabled) performAnalysis();
 });
+
+// ==============================================
+// CHATBOT LOGIC
+// ==============================================
+
+const chatbotToggle = document.getElementById('chatbotToggle');
+const chatbotPanel = document.getElementById('chatbotPanel');
+const chatbotCloseBtn = document.getElementById('chatbotCloseBtn');
+const chatbotBackBtn = document.getElementById('chatbotBackBtn');
+const chatbotMessages = document.getElementById('chatbotMessages');
+const chatbotInput = document.getElementById('chatbotInput');
+const chatbotSendBtn = document.getElementById('chatbotSendBtn');
+
+let chatMessages = [];  // [{ role: 'user'|'bot', text: '...' }]
+let chatbotOpen = false;
+let chatbotInitialized = false;
+let isSending = false;
+let chatbotContext = null;  // Extracted career context from resume
+
+// Open chatbot
+chatbotToggle.addEventListener('click', () => {
+    chatbotOpen = true;
+    chatbotPanel.classList.add('open');
+    chatbotToggle.classList.add('hidden');
+    chatbotInput.focus();
+
+    // Send initial greeting on first open
+    if (!chatbotInitialized) {
+        chatbotInitialized = true;
+        sendInitialGreeting();
+    }
+});
+
+// Close chatbot
+chatbotCloseBtn.addEventListener('click', () => {
+    chatbotOpen = false;
+    chatbotPanel.classList.remove('open');
+    chatbotToggle.classList.remove('hidden');
+});
+
+// Send on Enter
+chatbotInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !isSending) sendChatMessage();
+});
+
+// Send on button click
+chatbotSendBtn.addEventListener('click', () => {
+    if (!isSending) sendChatMessage();
+});
+
+// Back button — removes last user+bot exchange
+chatbotBackBtn.addEventListener('click', () => {
+    if (chatMessages.length <= 1) return;
+
+    // Remove messages from end: last bot reply, then last user message
+    let removed = 0;
+    while (chatMessages.length > 1 && removed < 2) {
+        const last = chatMessages[chatMessages.length - 1];
+        chatMessages.pop();
+        removed++;
+        if (last.role === 'user') break;
+    }
+
+    renderChatMessages();
+    updateBackButton();
+});
+
+function sendInitialGreeting() {
+    let greeting;
+    if (state.resumeSkills && state.resumeSkills.length > 0) {
+        greeting = "I've reviewed the skills from your resume. What are your current interests? I'd love to help you figure out the best next step in your career.";
+    } else {
+        greeting = "Hi there! I'm your career advisor. To get started, could you tell me — are you currently a student, a working professional, or on a gap year?";
+    }
+
+    chatMessages.push({ role: 'bot', text: greeting });
+    renderChatMessages();
+    updateBackButton();
+}
+
+async function sendChatMessage() {
+    const text = chatbotInput.value.trim();
+    if (!text || isSending) return;
+
+    isSending = true;
+    chatbotSendBtn.disabled = true;
+
+    // Add user message
+    chatMessages.push({ role: 'user', text: text });
+    appendBubble('user', text);
+    chatbotInput.value = '';
+
+    // Show typing indicator
+    const typingEl = showTypingIndicator();
+    scrollChatToBottom();
+
+    // Build resume context for API
+    let resumeContext = null;
+    if (state.resumeSkills && state.resumeSkills.length > 0) {
+        resumeContext = {
+            skills: state.resumeSkills,
+            domain: domainInput.value.trim() || 'technology',
+            chatbotContext: chatbotContext
+        };
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/chatbot`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                messages: chatMessages,
+                resumeContext: resumeContext
+            })
+        });
+
+        const data = await response.json();
+        removeTypingIndicator(typingEl);
+
+        if (data.error) {
+            const errMsg = { role: 'bot', text: 'Sorry, something went wrong. Please try again in a moment.' };
+            chatMessages.push(errMsg);
+            appendBubble('bot', errMsg.text);
+        } else {
+            const botMsg = { role: 'bot', text: data.reply };
+            chatMessages.push(botMsg);
+            appendBubble('bot', data.reply);
+        }
+    } catch (err) {
+        removeTypingIndicator(typingEl);
+        const errMsg = { role: 'bot', text: 'Connection error. Please check if the server is running.' };
+        chatMessages.push(errMsg);
+        appendBubble('bot', errMsg.text);
+    } finally {
+        isSending = false;
+        chatbotSendBtn.disabled = false;
+        scrollChatToBottom();
+        updateBackButton();
+        chatbotInput.focus();
+    }
+}
+
+function appendBubble(role, text) {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${role}`;
+    bubble.textContent = text;
+    chatbotMessages.appendChild(bubble);
+    scrollChatToBottom();
+}
+
+function renderChatMessages() {
+    chatbotMessages.innerHTML = '';
+    chatMessages.forEach(msg => appendBubble(msg.role, msg.text));
+    scrollChatToBottom();
+}
+
+function showTypingIndicator() {
+    const typing = document.createElement('div');
+    typing.className = 'typing-indicator';
+    typing.innerHTML = '<span></span><span></span><span></span>';
+    chatbotMessages.appendChild(typing);
+    scrollChatToBottom();
+    return typing;
+}
+
+function removeTypingIndicator(el) {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+function scrollChatToBottom() {
+    requestAnimationFrame(() => {
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    });
+}
+
+function updateBackButton() {
+    chatbotBackBtn.disabled = chatMessages.length <= 1;
+}
