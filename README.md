@@ -35,4 +35,3 @@ python app.py
 - **AI/ML**: sentence-transformers, spaCy, scikit-learn
 - **Frontend**: HTML5, CSS3, JavaScript, Chart.js, Mermaid.js
 - **File Processing**: PyMuPDF, python-docx
-

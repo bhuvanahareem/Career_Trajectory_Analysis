@@ -1239,3 +1239,272 @@ body {
         height: 56px;
     }
 }
+
+/* =============================================
+   CAREER CONFUSED FEATURE
+   ============================================= */
+
+.confused-btn {
+    padding: 1rem 2.5rem;
+    background: transparent;
+    color: var(--secondary-olive);
+    border: 2px solid var(--primary-sage);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'IBM Plex Sans', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.confused-btn:hover:not(:disabled) {
+    background: var(--primary-sage);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(172, 200, 162, 0.2);
+}
+
+.confused-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #ddd;
+}
+
+.confused-section {
+    padding: 4rem 0;
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.confused-header {
+    text-align: center;
+    margin-bottom: 4rem;
+}
+
+.confused-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--secondary-olive);
+    margin-bottom: 1rem;
+}
+
+.confused-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.career-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+.career-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 2.5rem;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    border: 1px solid rgba(172, 200, 162, 0.2);
+    box-shadow: 0 15px 35px rgba(26, 37, 23, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.career-card:hover {
+    transform: translateY(-10px) rotateX(4deg) rotateY(4deg);
+    box-shadow: 0 30px 60px rgba(26, 37, 23, 0.12);
+    border-color: var(--primary-sage);
+}
+
+.card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--secondary-olive);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.card-desc {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(172, 200, 162, 0.1);
+}
+
+.match-badge {
+    background: var(--primary-sage);
+    color: var(--secondary-olive);
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.missing-count {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--secondary-olive);
+}
+
+.detailed-career-section {
+    padding: 2rem 0;
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.back-to-cards {
+    background: none;
+    border: none;
+    color: var(--secondary-olive);
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+
+.back-to-cards:hover {
+    transform: translateX(-5px);
+}
+
+.detailed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--primary-sage);
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.detailed-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    color: var(--secondary-olive);
+    flex: 1;
+}
+
+.detailed-score-badge {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--secondary-olive);
+    background: var(--primary-sage);
+    padding: 12px 30px;
+    border-radius: 40px;
+}
+
+.detailed-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    margin-bottom: 6rem;
+}
+
+.detailed-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.detailed-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--sage-dark);
+    margin-bottom: 1.5rem;
+    display: block;
+}
+
+.detailed-desc {
+    font-size: 1.3rem;
+    line-height: 1.8;
+    color: var(--secondary-olive);
+    font-weight: 300;
+}
+
+.detailed-missing-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.detailed-missing-list li {
+    background: rgba(143, 168, 126, 0.08);
+    color: var(--secondary-olive);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: 1px solid rgba(143, 168, 126, 0.15);
+}
+
+/* Roadmap Node Enhancements */
+.node-content.top {
+    bottom: calc(100% + 15px);
+}
+
+.node-content.bottom {
+    top: calc(100% + 15px);
+}
+
+.tier-skills {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.skill-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 2px;
+    font-size: 0.8rem;
+}
+
+.skill-tag.mastered {
+    background: rgba(143, 168, 126, 0.2);
+    color: var(--secondary-olive);
+    border: 1px solid rgba(143, 168, 126, 0.3);
+}
+
+.skill-tag.missing {
+    background: rgba(143, 168, 126, 0.1);
+    color: var(--secondary-olive);
+    border: 1px solid rgba(143, 168, 126, 0.2);
+}
+
+.detailed-roadmap-wrapper {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 32px;
+    padding: 3rem;
+    border: 1px solid rgba(172, 200, 162, 0.2);
+}
+
+.career-card {
+    opacity: 0;
+    animation: fadeInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) both;
+}

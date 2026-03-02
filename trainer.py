@@ -3,7 +3,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 import json
 import torch
-import torch.optim as optim  # Use the standard PyTorch optimizer
+import torch.optim as optim
+from torch.optim import AdamW
 import numpy as np
 from transformers import BertTokenizer, BertForSequenceClassification
 from torch.utils.data import DataLoader, Dataset
@@ -15,8 +16,9 @@ with open('skills_knowledge.json', 'r') as f:
 # This creates the "Master List" the AI will learn
 ALL_SKILLS = []
 for job in knowledge.values():
-    for tier in job.values():
-        for skill in tier:
+    for tier in ["beginner", "compulsory", "intermediate", "advanced"]:
+        tier_skills = job.get(tier, [])
+        for skill in tier_skills:
             if skill not in ALL_SKILLS:
                 ALL_SKILLS.append(skill)
 ALL_SKILLS = sorted(ALL_SKILLS)
@@ -26,9 +28,11 @@ class CareerDataset(Dataset):
         self.samples = []
         for job_title, tiers in knowledge.items():
             target_vector = np.zeros(len(ALL_SKILLS))
-            for tier_skills in tiers.values():
+            for tier in ["beginner", "compulsory", "intermediate", "advanced"]:
+                tier_skills = tiers.get(tier, [])
                 for s in tier_skills:
-                    target_vector[ALL_SKILLS.index(s)] = 1
+                    if s in ALL_SKILLS:
+                        target_vector[ALL_SKILLS.index(s)] = 1
             self.samples.append((job_title, target_vector))
         self.tokenizer = tokenizer
 
@@ -43,15 +47,15 @@ class CareerDataset(Dataset):
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=len(ALL_SKILLS))
 dataset = CareerDataset(knowledge, tokenizer)
-loader = DataLoader(dataset, batch_size=2, shuffle=True)
+loader = DataLoader(dataset, batch_size=4, shuffle=True)
 
 optimizer = AdamW(model.parameters(), lr=5e-5)
 model.train()
 
-print(f"Training on {len(ALL_SKILLS)} unique skills...")
+print(f"Training on {len(ALL_SKILLS)} unique skills across {len(knowledge)} job titles...")
 
 # Training Loop
-for epoch in range(60): # Increased epochs for better accuracy
+for epoch in range(20): # 20 epochs is enough for this tiny set
     total_loss = 0
     for ids, mask, targets in loader:
         optimizer.zero_grad()
@@ -61,7 +65,7 @@ for epoch in range(60): # Increased epochs for better accuracy
         optimizer.step()
         total_loss += loss.item()
     
-    if epoch % 10 == 0:
+    if epoch % 5 == 0:
         print(f"Epoch {epoch} | Loss: {total_loss/len(loader):.4f}")
 
 # Save the Brain
@@ -71,8 +75,12 @@ if not os.path.exists(output_dir): os.makedirs(output_dir)
 model.save_pretrained(output_dir)
 tokenizer.save_pretrained(output_dir)
 
-# Save the metadata so predictor.py knows which index belongs to which skill
+# Save the metadata including the full tiered structure for each domain
+# This removes dependency on skills_knowledge.json during prediction
 with open(os.path.join(output_dir, 'skill_meta.json'), 'w') as f:
-    json.dump({"all_skills": ALL_SKILLS}, f)
+    json.dump({
+        "all_skills": ALL_SKILLS,
+        "structured_data": knowledge
+    }, f, indent=4)
 
-print("✅ Model trained and saved successfully!")
+print("✅ Model trained and saved successfully with full structural metadata!")

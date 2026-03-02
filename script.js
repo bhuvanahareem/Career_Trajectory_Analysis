@@ -141,14 +141,28 @@ function clearFile() {
     checkAnalyzeButton();
 }
 
+// New DOM Elements for Confused Feature
+const confusedBtn = document.getElementById('confusedBtn');
+const confusedSection = document.getElementById('confusedSection');
+const careerCardsGrid = document.getElementById('careerCardsGrid');
+const detailedCareerView = document.getElementById('detailedCareerView');
+const backToCardsBtn = document.getElementById('backToCardsBtn');
+const detailedTitle = document.getElementById('detailedTitle');
+const detailedScoreBadge = document.getElementById('detailedScoreBadge');
+const detailedDesc = document.getElementById('detailedDesc');
+const detailedMissingList = document.getElementById('detailedMissingList');
+const detailedRoadmap = document.getElementById('detailedRoadmap');
+const resetConfusedBtn = document.getElementById('resetConfusedBtn');
+
 function checkAnalyzeButton() {
     const hasFile = state.uploadedFile !== null;
     const hasDomain = domainInput.value.trim().length > 0;
     analyzeBtn.disabled = !(hasFile && hasDomain);
+    if (confusedBtn) confusedBtn.disabled = !hasFile;
 }
 
 domainInput.addEventListener('input', checkAnalyzeButton);
-
+confusedBtn.addEventListener('click', fetchConfusedResults);
 analyzeBtn.addEventListener('click', performAnalysis);
 
 async function performAnalysis() {
@@ -178,6 +192,33 @@ async function performAnalysis() {
 
         state.analysisResult = data;
         displayResults(data);
+    } catch (error) {
+        alert(`Error: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
+}
+
+async function fetchConfusedResults() {
+    if (state.resumeSkills.length === 0) return;
+
+    showLoading();
+    try {
+        const response = await fetch(`${API_BASE}/confused`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skills: state.resumeSkills })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            renderCareerCards(data.matches);
+            inputSection.style.display = 'none';
+            confusedSection.style.display = 'block';
+            confusedSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            throw new Error(data.error || 'Failed to analyze career paths');
+        }
     } catch (error) {
         alert(`Error: ${error.message}`);
     } finally {
@@ -261,14 +302,77 @@ function displayResults(data) {
     }
 
     // 7. Render Primary Roadmap
-    renderWavyRoadmap(data.missing_by_tier, domainInput.value.trim(), 'mermaidContainer');
+    renderWavyRoadmap(data.all_skills_by_tier, domainInput.value.trim(), 'mermaidContainer');
 }
 
+function renderCareerCards(matches) {
+    careerCardsGrid.innerHTML = '';
+
+    if (matches.length === 0) {
+        careerCardsGrid.innerHTML = '<p class="no-matches">No domains found with more than 30% match. Try adding more skills to your resume!</p>';
+        return;
+    }
+
+    matches.forEach((match, index) => {
+        const card = document.createElement('div');
+        card.className = 'career-card';
+        card.style.animationDelay = `${index * 0.1}s`;
+
+        card.innerHTML = `
+            <div class="card-content">
+                <h3 class="card-title">${match.domain}</h3>
+                <p class="card-desc">${match.description}</p>
+                <div class="card-footer">
+                    <span class="match-badge">${match.score}% Match</span>
+                    <span class="missing-count">${match.missing_count} skills missing</span>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('click', () => showDetailedCareerAnalysis(match));
+        careerCardsGrid.appendChild(card);
+    });
+}
+
+function showDetailedCareerAnalysis(career) {
+    confusedSection.style.display = 'none';
+    detailedCareerView.style.display = 'block';
+
+    detailedTitle.textContent = career.domain;
+    detailedScoreBadge.textContent = `${career.score}% Match`;
+    detailedDesc.textContent = career.description;
+
+    // Update Missing Skills List
+    detailedMissingList.innerHTML = '';
+    career.missing_skills.forEach(skill => {
+        const li = document.createElement('li');
+        li.textContent = skill;
+        detailedMissingList.appendChild(li);
+    });
+
+    // Render Wavy Roadmap
+    renderWavyRoadmap(career.all_skills_by_tier, career.domain, 'detailedRoadmap');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+backToCardsBtn.addEventListener('click', () => {
+    detailedCareerView.style.display = 'none';
+    confusedSection.style.display = 'block';
+});
+
+resetConfusedBtn.addEventListener('click', () => {
+    confusedSection.style.display = 'none';
+    inputSection.style.display = 'block';
+    clearFile();
+});
+
 function updateScoreCircle(score) {
+    const s = parseFloat(score);
     const circumference = 2 * Math.PI * 45;
-    const offset = circumference - (score / 100) * circumference;
+    const offset = circumference - (s / 100) * circumference;
     scoreProgress.style.strokeDashoffset = offset;
-    animateValue(scoreValue, 0, score, 1500);
+    animateValue(scoreValue, 0, s, 1500);
 }
 
 function animateValue(element, start, end, duration) {
@@ -330,7 +434,7 @@ function createSkillChart(foundCount, missingCount) {
     });
 }
 
-function renderWavyRoadmap(missingByTier, domain, containerId) {
+function renderWavyRoadmap(allSkillsByTier, domain, containerId) {
     const container = document.getElementById(containerId);
 
     // Set title if it's the main roadmap container
@@ -343,19 +447,24 @@ function renderWavyRoadmap(missingByTier, domain, containerId) {
     const wrapper = document.createElement('div');
     wrapper.className = 'roadmap-wrapper';
 
+    // Adjust width for 5 tiers + Start + Goal (total 7 nodes)
+    const numTiers = 5;
+    const totalNodes = numTiers + 2;
+    const spacing = 300;
+    const totalWidth = (totalNodes - 1) * spacing;
+
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute('class', 'wavy-road-svg');
-    svg.setAttribute('width', '1800');
+    svg.setAttribute('width', totalWidth);
     svg.setAttribute('height', '400');
-    svg.setAttribute('viewBox', '0 0 1800 400');
+    svg.setAttribute('viewBox', `0 0 ${totalWidth} 400`);
 
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    // Generate a wavy path: Start at 200, wave between 50 and 350
     let d = "M 0 200";
-    for (let i = 0; i < 6; i++) {
-        const x1 = i * 300 + 150;
+    for (let i = 0; i < totalNodes - 1; i++) {
+        const x1 = i * spacing + (spacing / 2);
         const y1 = (i % 2 === 0) ? 50 : 350;
-        const x2 = (i + 1) * 300;
+        const x2 = (i + 1) * spacing;
         const y2 = 200;
         d += ` Q ${x1} ${y1} ${x2} ${y2}`;
     }
@@ -371,14 +480,16 @@ function renderWavyRoadmap(missingByTier, domain, containerId) {
     const nodesContainer = document.createElement('div');
     nodesContainer.className = 'nodes-container';
 
-    const tierKeys = ['beginner', 'compulsory', 'intermediate', 'advanced'];
-    const nodeLabels = ['Start', 'Beginner', 'Compulsory', 'Intermediate', 'Advanced', 'Goal'];
+    const tierKeys = ['beginner', 'compulsory', 'intermediate', 'advanced', 'next_steps'];
+    const nodeLabels = ['Start', 'Beginner', 'Compulsory', 'Intermediate', 'Advanced', 'Next_Steps', 'Goal'];
+
+    const userSkillsLower = (state.resumeSkills || []).map(s => s.toLowerCase());
 
     nodeLabels.forEach((label, index) => {
         const nodeEl = document.createElement('div');
         nodeEl.className = 'wavy-node';
 
-        const x = index * 300;
+        const x = index * spacing;
         nodeEl.style.left = `${x}px`;
 
         if (label === 'Start') {
@@ -389,10 +500,17 @@ function renderWavyRoadmap(missingByTier, domain, containerId) {
             nodeEl.innerHTML = `<span>Goal: ${domain}</span>`;
         } else {
             const tierKey = tierKeys[index - 1];
-            const missing = (missingByTier && missingByTier[tierKey]) ? missingByTier[tierKey] : [];
-            const isAchieved = missing.length === 0;
+            const allSkills = (allSkillsByTier && allSkillsByTier[tierKey]) ? allSkillsByTier[tierKey] : [];
 
-            if (isAchieved) nodeEl.classList.add('achieved');
+            // Check which skills are mastered
+            const skillsHtml = allSkills.map(skill => {
+                const isMastered = userSkillsLower.includes(skill.toLowerCase());
+                return `<span class="skill-tag ${isMastered ? 'mastered' : 'missing'}">${isMastered ? '✓ ' : ''}${skill}</span>`;
+            }).join(' ');
+
+            const isTierMastered = allSkills.length > 0 && allSkills.every(s => userSkillsLower.includes(s.toLowerCase()));
+
+            if (isTierMastered) nodeEl.classList.add('achieved');
             nodeEl.textContent = index;
 
             const content = document.createElement('div');
@@ -401,8 +519,8 @@ function renderWavyRoadmap(missingByTier, domain, containerId) {
             content.innerHTML = `
                 <div class="tier-title">${label}</div>
                 <div class="tier-skills">
-                    <strong>${isAchieved ? 'ACHIEVED' : 'TARGET SKILLS'}</strong>
-                    ${isAchieved ? '✓ All skills mastered' : missing.join(' • ')}
+                    <strong>${isTierMastered ? 'ACHIEVED' : 'PATHWAY SKILLS'}</strong><br>
+                    ${skillsHtml || '<span class="text-muted">No specific skills listed</span>'}
                 </div>
             `;
             nodeEl.appendChild(content);
@@ -428,6 +546,8 @@ resetBtn.addEventListener('click', () => {
     clearFile();
     domainInput.value = '';
     resultsSection.style.display = 'none';
+    confusedSection.style.display = 'none';
+    detailedCareerView.style.display = 'none';
     inputSection.style.display = 'block';
     if (skillChart) {
         skillChart.destroy();

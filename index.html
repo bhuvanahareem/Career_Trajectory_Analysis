@@ -114,8 +114,54 @@
 
                 </div>
 
+                <!-- New Confused Button -->
+                <div class="confused-btn-container" style="text-align: center; margin-top: 2rem;">
+                    <button class="confused-btn" id="confusedBtn" disabled>
+                        <span class="btn-text">Confused</span>
+                        <span class="btn-icon">?</span>
+                    </button>
+                </div>
+
             </div>
 
+        </section>
+
+        <!-- Confused Results Section -->
+        <section class="confused-section" id="confusedSection" style="display: none;">
+            <header class="confused-header">
+                <h2 class="confused-title">Potential Career Paths</h2>
+                <p class="confused-subtitle">Based on your skills, explore these domains where you have a significant head start.</p>
+            </header>
+            <div class="career-cards-grid" id="careerCardsGrid"></div>
+            <button class="reset-btn" id="resetConfusedBtn">Back to Upload</button>
+        </section>
+
+        <!-- Detailed Career View (Full analysis of a selected card) -->
+        <section class="detailed-career-section" id="detailedCareerView" style="display: none;">
+            <button class="back-to-cards" id="backToCardsBtn">← Back to suggestions</button>
+            
+            <div class="detailed-header">
+                <h2 class="detailed-title" id="detailedTitle"></h2>
+                <div class="detailed-score-badge" id="detailedScoreBadge"></div>
+            </div>
+            
+            <div class="detailed-content-grid">
+                <div class="detailed-left detailed-column">
+                    <h3 class="detailed-label">Domain Description</h3>
+                    <p class="detailed-desc" id="detailedDesc"></p>
+                </div>
+                <div class="detailed-right detailed-column">
+                    <h3 class="detailed-label">Missing Skills to Master</h3>
+                    <ul class="detailed-missing-list" id="detailedMissingList"></ul>
+                </div>
+            </div>
+
+            <div class="detailed-roadmap-wrapper">
+                <h3 class="detailed-label centered">Your Strategic Roadmap</h3>
+                <div class="wavy-roadmap-section" id="detailedRoadmap">
+                    <!-- Road will be injected here -->
+                </div>
+            </div>
         </section>
 
 

@@ -10,11 +10,10 @@ from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
-print(f"DEBUG: Gemini Key found: {os.getenv('GOOGLE_API_KEY')[:5] if os.getenv('GOOGLE_API_KEY') else 'None'}...")
 print(f"DEBUG: Groq Key found: {os.getenv('GROQ_API_KEY')[:5] if os.getenv('GROQ_API_KEY') else 'None'}...")
 
 # --- IMPORT YOUR TRAINED AI LOGIC ---
-from predictor import analyze_skill_gap, extract_skills_from_text
+from predictor import analyze_skill_gap, extract_skills_from_text, analyze_confused_paths, CAREER_METADATA
 from extract_data import extract_chatbot_context
 
 app = Flask(__name__)
@@ -29,11 +28,8 @@ groq_client = None
 if GROQ_API_KEY:
     groq_client = Groq(api_key=GROQ_API_KEY)
 
-# Load domain knowledge for chatbot context
-with open('skills_knowledge.json', 'r') as f:
-    SKILLS_DB = json.load(f)
-
-CAREER_DOMAINS_SUMMARY = ", ".join(SKILLS_DB.keys())
+# Use metadata from predictor instead of legacy JSON
+CAREER_DOMAINS_SUMMARY = ", ".join(CAREER_METADATA.keys())
 
 def clean_text(text):
     text = text.replace('|', ' ').replace(':', ' ').replace('/', ' ')
@@ -88,7 +84,6 @@ def analyze_career():
     # --- USE THE TRAINED AI ENGINE ---
     analysis = analyze_skill_gap(user_skills, target_job)
     
-    # Matching the exact keys your UI expects to see
     return jsonify({
         'score': round(float(analysis['score']), 2),
         'status_text': analysis['status_text'],
@@ -98,8 +93,24 @@ def analyze_career():
         'missing_skills': analysis['missing_skills'],
         'roadmap': analysis['roadmap'],
         'missing_by_tier': analysis['missing_by_tier'],
+        'all_skills_by_tier': analysis.get('all_skills_by_tier', {}),
         'alt_domain': analysis['alt_domain'],
-        'alt_missing_by_tier': analysis.get('alt_missing_by_tier', {})
+        'alt_missing_by_tier': analysis.get('alt_missing_by_tier', {}),
+        'description': analysis.get('description', '')
+    })
+
+@app.route('/api/confused', methods=['POST'])
+def career_confused():
+    data = request.json
+    user_skills = data.get('skills', [])
+    
+    # Analyze all paths > 30% match
+    from predictor import analyze_confused_paths
+    matches = analyze_confused_paths(user_skills)
+    
+    return jsonify({
+        'success': True,
+        'matches': matches
     })
 
 @app.route('/api/chatbot', methods=['POST'])
