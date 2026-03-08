@@ -158,6 +158,75 @@ STATIC_FALLBACK_LIBRARY = {
 }
 
 # ──────────────────────────────────────────────
+# Skill Descriptions (for PDF formatting)
+# ──────────────────────────────────────────────
+SKILL_DESCRIPTIONS = {
+    "html": "The standard markup language for creating web pages and describing the structure of a website.",
+    "css": "A style sheet language used for describing the presentation of a document written in HTML.",
+    "javascript": "A versatile programming language that enables interactive web pages and is an essential part of web applications.",
+    "git/github/gitlab": "Tools and platforms for version control that allow developers to track changes and collaborate on code repositories.",
+    "bootstrap": "A popular CSS framework for developing responsive and mobile-first websites.",
+    "react": "A JavaScript library for building user interfaces, specifically single-page applications, using components.",
+    "rest apis": "A standardized architectural style for creating web services that allow different systems to communicate over HTTP.",
+    "tailwind css": "A utility-first CSS framework for rapidly building custom user interfaces without leaving your HTML.",
+    "next.js": "A React framework that enables server-side rendering and generating static websites for optimized performance.",
+    "typescript": "A strongly typed superset of JavaScript that adds static types to help catch errors during development.",
+    "redux/zustand": "State management libraries used to manage and centralize application state in complex JavaScript apps.",
+    "java/python/node.js": "Core backend technologies used to build the server-side logic of applications.",
+    "oop": "Object-Oriented Programming; a programming paradigm based on the concept of 'objects' containing data and code.",
+    "mysql/sql/nosql/postgresql/mongodb": "Various database technologies used for storing, querying, and managing structured and unstructured data.",
+    "database design": "The process of producing a detailed data model of a database, including tables, relationships, and constraints.",
+    "spring boot/express/django": "Backend frameworks used to streamline the development of web applications in Java, Node.js, and Python respectively.",
+    "jwt/oauth": "Standard protocols and methods for secure authentication and authorization between parties.",
+    "redis/memcached": "In-memory data structure stores used as databases, caches, and message brokers for high performance.",
+    "microservices": "An architectural style that structures an application as a collection of small, autonomous services.",
+    "kafka/rabbitmq": "Message-broker software used for handling real-time data feeds and asynchronous communication between services.",
+    "system design": "The process of defining the architecture, components, and interfaces for a system to satisfy specified requirements.",
+    "docker/kubernetes": "Technologies for containerization and orchestration, ensuring apps run consistently across different environments.",
+    "aws/gcp/azure": "Major cloud computing platforms providing scalable compute, storage, and networking services.",
+    "ci/cd": "Continuous Integration and Continuous Deployment; practices that automate the building, testing, and deployment of code.",
+    "linux": "An open-source operating system widely used for servers, cloud computing, and development environments.",
+    "networking": "The field of connecting computers to share resources and communicate via protocols like TCP/IP.",
+    "shell scripting": "Writing programs for the command-line interpreter to automate repetitive operating system tasks.",
+    "terraform": "An infrastructure-as-code tool used to define and provision data center infrastructure using a declarative language.",
+    "prometheus/grafana": "Tools used together for monitoring system health and visualizing time-series data through dashboards.",
+    "iam": "Identity and Access Management; a framework of policies and technologies to ensure the right users have appropriate access to resources.",
+    "zero trust architecture": "A security model that requires strict identity verification for every person and device trying to access resources.",
+    "threat modeling": "A procedure for optimizing security by identifying objectives and vulnerabilities, and then defining countermeasures.",
+    "excel": "A spreadsheet application used for data organization, analysis, and complex mathematical functions.",
+    "statistics": "The practice of collecting and analyzing numerical data in large quantities to infer patterns and trends.",
+    "pandas/numpy/matplotlib": "Python libraries used for data manipulation, numerical computing, and creating static or interactive visualizations.",
+    "data cleaning": "The process of detecting and correcting corrupt or inaccurate records from a record set or database.",
+    "power bi/tableau": "Business intelligence tools used to visualize data and share insights across an organization.",
+    "eda/exploratory data analysis": "An approach to analyzing data sets to summarize their main characteristics, often with visual methods.",
+    "predictive analytics": "The use of data, statistical algorithms, and ML techniques to identify the likelihood of future outcomes.",
+    "scikit-learn": "A robust Python library for machine learning providing simple and efficient tools for predictive data analysis.",
+    "tensorflow/pytorch": "Open-source libraries used for high-performance numerical computation and building deep learning models.",
+    "nlp/natural language processing": "A field of AI focused on the interaction between computers and human language.",
+    "transformers/llms": "Advanced AI architectures and Large Language Models used for state-of-the-art NLP tasks like translation and text generation.",
+    "feature engineering": "The process of using domain knowledge to extract features from raw data that make machine learning algorithms work.",
+    "reinforcement learning": "An area of machine learning concerned with how intelligent agents ought to take actions in an environment to maximize reward.",
+    "etl pipelines": "Extract, Transform, Load; the process of moving data from source systems to a target warehouse.",
+    "apache spark": "A unified analytics engine for large-scale data processing and distributed computing.",
+    "airflow": "A platform to programmatically author, schedule, and monitor workflows and data pipelines.",
+    "java/kotlin/flutter": "Languages and frameworks used for building high-performance mobile applications.",
+    "mvvm architecture": "Model-View-ViewModel; a software architectural pattern that facilitates the separation of the development of the GUI.",
+    "solidity": "An object-oriented programming language for writing smart contracts on various blockchain platforms, most notably Ethereum.",
+    "smart contracts": "Self-executing contracts with the terms of the agreement directly written into lines of code on a blockchain.",
+    "selenium/cypress": "Automation tools used for testing web applications to ensure they behave as expected.",
+    "owasp top 10": "A standard awareness document for developers and web application security representing the most critical security risks.",
+    "figma": "A collaborative web-based design tool used for UI and UX design, prototyping, and wireframing.",
+    "blender": "A free and open-source 3D computer graphics software toolset used for creating animated films and visual effects.",
+    "agile/scrum": "Iterative project management and software development frameworks that help teams deliver value to customers faster.",
+    "mlflow": "An open-source platform to manage the ML lifecycle, including experimentation, reproducibility, and deployment.",
+    "dax": "Data Analysis Expressions; a library of functions and operators that can be combined to build formulas and expressions in Power BI."
+}
+
+# Generic fallback description generator
+def _get_generic_description(skill: str) -> str:
+    return f"Resources and path to master {skill}, covering core concepts and practical implementations."
+
+# ──────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────
 _BEGINNER_KEYWORDS   = ["beginner", "for beginners", "basics", "getting started",
@@ -422,7 +491,19 @@ class ResourceBroker:
                 logger.warning("[YouTube API] Exception for '%s': %s", skill, e)
         else:
             logger.warning("[YouTube API] No API key set – using static fallback")
-        return self._static_fallback(skill, level)[:3], False
+        
+        resources = self._static_fallback(skill, level)[:3]
+        return resources, False
+
+    def _get_skill_desc(self, skill: str) -> str:
+        s = skill.lower().strip()
+        if s in SKILL_DESCRIPTIONS:
+            return SKILL_DESCRIPTIONS[s]
+        # Partial match
+        for k, v in SKILL_DESCRIPTIONS.items():
+            if k in s or s in k:
+                return v
+        return _get_generic_description(skill)
 
     # ── Weekly plan builder ─────────────────────────
     @staticmethod
@@ -468,6 +549,7 @@ class ResourceBroker:
                 resources, used_youtube = self.get_resources(skill, level)
                 skill_data.append({
                     "skill":       skill,
+                    "description": self._get_skill_desc(skill),
                     "resources":   resources,
                     # "youtube" = live API data  |  "fallback" = static library
                     "source_type": "youtube" if used_youtube else "fallback",

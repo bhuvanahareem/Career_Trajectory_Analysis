@@ -1093,8 +1093,9 @@ async function downloadStudyPlan() {
     doc.setFontSize(9.5);
     doc.setTextColor(...SAGE);
     doc.setFont('helvetica', 'bold');
-    const motText = `🚀 Your study plan to go from ${Math.round(currentStudyPlan.score || 0)}% to a 100% expert in ${currentStudyPlan.domain}!`;
-    doc.text(motText, MARGIN + 5, y + 7.8, { maxWidth: CONTENT_W - 10 });
+    const motText = `Your study plan to go from ${Math.round(currentStudyPlan.score || 0)}% to a 100% expert in ${currentStudyPlan.domain}!`;
+    const motLines = doc.splitTextToSize(motText, CONTENT_W - 10);
+    doc.text(motLines, MARGIN + 5, y + 7.8, { maxWidth: CONTENT_W - 10 });
     y += 18;
 
     // ── Week Plans ─────────────────────────────────────────────────────────────
@@ -1122,6 +1123,17 @@ async function downloadStudyPlan() {
             doc.text(`• ${skillObj.skill}`, MARGIN + 4, y);
             y += 5;
 
+            // Skill description
+            if (skillObj.description) {
+                checkPage(10);
+                doc.setFontSize(8);
+                doc.setTextColor(...MUTED);
+                doc.setFont('helvetica', 'italic');
+                const descLines = doc.splitTextToSize(skillObj.description, CONTENT_W - 10);
+                doc.text(descLines, MARGIN + 6, y);
+                y += descLines.length * 4 + 2;
+            }
+
             // Resources
             skillObj.resources.forEach(r => {
                 checkPage(8);
@@ -1129,8 +1141,8 @@ async function downloadStudyPlan() {
                 doc.setTextColor(...MUTED);
                 doc.setFont('helvetica', 'normal');
 
-                const meta = [r.source, r.duration, r.views, r.level_tag].filter(Boolean).join(' · ');
-                const titleText = doc.splitTextToSize(`  ↗ ${r.title}`, CONTENT_W - 20);
+                const meta = [r.source, r.duration, r.level_tag].filter(Boolean).join(' · ');
+                const titleText = doc.splitTextToSize(`   ${r.title}`, CONTENT_W - 20); // Removed arrow
                 doc.text(titleText, MARGIN + 10, y);
                 y += titleText.length * 4.5;
 
