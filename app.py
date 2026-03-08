@@ -9,12 +9,17 @@ from werkzeug.utils import secure_filename
 from groq import Groq
 from dotenv import load_dotenv
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 load_dotenv()
 print(f"DEBUG: Groq Key found: {os.getenv('GROQ_API_KEY')[:5] if os.getenv('GROQ_API_KEY') else 'None'}...")
+print(f"DEBUG: YouTube Key found: {os.getenv('YOUTUBE_API_KEY')[:8] if os.getenv('YOUTUBE_API_KEY') else 'NOT SET – will use static fallback'}")
 
 # --- IMPORT YOUR TRAINED AI LOGIC ---
 from predictor import analyze_skill_gap, extract_skills_from_text, analyze_confused_paths, CAREER_METADATA
 from extract_data import extract_chatbot_context
+from study_plan import ResourceBroker
 
 app = Flask(__name__)
 CORS(app)
@@ -24,6 +29,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- GROQ CLIENT FOR CHATBOT ---
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY', '')
 groq_client = None
 if GROQ_API_KEY:
     groq_client = Groq(api_key=GROQ_API_KEY)
@@ -193,6 +199,31 @@ def chatbot():
         if '429' in error_str:
             return jsonify({'reply': "I'm currently at my response limit. Please wait a moment and try again."}), 200
         return jsonify({'error': f'Chatbot error: {error_str}'}), 500
+
+@app.route('/api/study-plan', methods=['POST'])
+def get_study_plan():
+    data = request.json
+    missing_skills = data.get('missing_skills', [])
+    found_skills   = data.get('found_skills', [])
+    score          = float(data.get('score', 0))
+    domain         = data.get('domain', '')
+    description    = data.get('description', '')
+
+    if not missing_skills:
+        return jsonify({'success': True, 'weeks': [], 'skill_level': 'Beginner', 'message': 'No missing skills – you are ready!'})
+
+    broker = ResourceBroker(youtube_api_key=YOUTUBE_API_KEY)
+    weeks  = broker.build_study_plan(missing_skills, score)
+    return jsonify({
+        'success':     True,
+        'weeks':       weeks,
+        'skill_level': broker.get_skill_level(score),
+        'domain':      domain,
+        'description': description,
+        'found_skills': found_skills,
+        'missing_skills': missing_skills,
+        'score':       score,
+    })
 
 # --- SERVE FRONTEND (STRICTLY NO JINJA) ---
 @app.route('/')

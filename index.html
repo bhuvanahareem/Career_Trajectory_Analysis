@@ -24,6 +24,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
 
+    <!-- jsPDF for study plan PDF export -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
 </head>
 
 <body>
@@ -241,6 +244,15 @@
 
             </div>
 
+            <!-- Study Plan Trigger Button -->
+            <div class="study-plan-btn-wrapper" id="studyPlanBtnWrapper" style="display:none;">
+                <button class="study-plan-trigger-btn" id="studyPlanBtn">
+                    <span class="sp-btn-icon">&#128218;</span>
+                    <span class="sp-btn-text">Get study plan to excel</span>
+                    <span class="sp-btn-arrow">&rarr;</span>
+                </button>
+            </div>
+
 
 
             <div class="alternative-career" id="alternativeCareer" style="display: none;">
@@ -277,6 +289,55 @@
     </main>
 
 
+
+    <!-- ============================================================
+         STUDY PLAN MODAL
+         ============================================================ -->
+    <div class="sp-overlay" id="spOverlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Study Plan">
+        <div class="sp-card" id="spCard">
+
+            <!-- Close Button -->
+            <button class="sp-close-btn" id="spCloseBtn" aria-label="Close study plan">&times;</button>
+
+            <!-- Header -->
+            <div class="sp-header">
+                <div class="sp-header-accent"></div>
+                <h2 class="sp-domain-title" id="spDomainTitle"></h2>
+                <p class="sp-domain-desc" id="spDomainDesc"></p>
+                <div class="sp-skill-level-badge" id="spSkillLevelBadge"></div>
+            </div>
+
+            <!-- Skills You Have -->
+            <div class="sp-section">
+                <h3 class="sp-section-label sp-label-found">&#10003; Skills You Have</h3>
+                <div class="sp-chips-row" id="spFoundChips"></div>
+            </div>
+
+            <!-- Skills You're Missing -->
+            <div class="sp-section">
+                <h3 class="sp-section-label sp-label-missing">&#9888; Skills to Acquire</h3>
+                <div class="sp-chips-row" id="spMissingChips"></div>
+            </div>
+
+            <!-- Motivational Banner -->
+            <div class="sp-motivation-banner" id="spMotivationBanner">
+                <span class="sp-motivation-icon">&#128640;</span>
+                <span class="sp-motivation-text" id="spMotivationText"></span>
+            </div>
+
+            <!-- Week Plan Container -->
+            <div class="sp-week-plan" id="spWeekPlan"></div>
+
+            <!-- Download Button -->
+            <div class="sp-download-wrapper">
+                <button class="sp-download-btn" id="spDownloadBtn">
+                    <span>&#128451;</span>
+                    <span>Download the plan</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
 
     <!-- Chatbot Widget -->
     <button class="chatbot-toggle" id="chatbotToggle" aria-label="Open career advisor chat">

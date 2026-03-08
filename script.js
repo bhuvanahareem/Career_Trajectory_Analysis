@@ -740,3 +740,419 @@ function scrollChatToBottom() {
 function updateBackButton() {
     chatbotBackBtn.disabled = chatMessages.length <= 1;
 }
+
+// ==============================================
+// STUDY PLAN FEATURE
+// ==============================================
+
+const studyPlanBtnWrapper = document.getElementById('studyPlanBtnWrapper');
+const studyPlanBtn = document.getElementById('studyPlanBtn');
+const spOverlay = document.getElementById('spOverlay');
+const spCard = document.getElementById('spCard');
+const spCloseBtn = document.getElementById('spCloseBtn');
+const spDomainTitle = document.getElementById('spDomainTitle');
+const spDomainDesc = document.getElementById('spDomainDesc');
+const spSkillLevelBadge = document.getElementById('spSkillLevelBadge');
+const spFoundChips = document.getElementById('spFoundChips');
+const spMissingChips = document.getElementById('spMissingChips');
+const spMotivationText = document.getElementById('spMotivationText');
+const spWeekPlan = document.getElementById('spWeekPlan');
+const spDownloadBtn = document.getElementById('spDownloadBtn');
+
+let currentStudyPlan = null; // cache the last fetched plan
+
+// Hook into existing displayResults to show button
+const _origDisplayResults = displayResults;
+displayResults = function (data) {
+    _origDisplayResults(data);
+    if (data.missing_skills && data.missing_skills.length > 0) {
+        studyPlanBtnWrapper.style.display = 'flex';
+    } else {
+        studyPlanBtnWrapper.style.display = 'none';
+    }
+};
+
+// Open handler
+studyPlanBtn.addEventListener('click', openStudyPlan);
+
+// Close handlers
+spCloseBtn.addEventListener('click', closeStudyPlan);
+spOverlay.addEventListener('click', (e) => {
+    if (e.target === spOverlay) closeStudyPlan();
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeStudyPlan();
+});
+
+// Download handler
+spDownloadBtn.addEventListener('click', downloadStudyPlan);
+
+async function openStudyPlan() {
+    if (!state.analysisResult) return;
+    const data = state.analysisResult;
+
+    // Show loading state on button
+    studyPlanBtn.disabled = true;
+    studyPlanBtn.querySelector('.sp-btn-text').textContent = 'Building your plan…';
+
+    try {
+        const response = await fetch(`${API_BASE}/study-plan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                missing_skills: data.missing_skills || [],
+                found_skills: data.found_skills || [],
+                score: data.score || 0,
+                domain: domainInput.value.trim(),
+                description: data.description || '',
+            })
+        });
+
+        const plan = await response.json();
+        if (!plan.success) throw new Error(plan.error || 'Failed to build plan');
+
+        currentStudyPlan = plan;
+        renderStudyPlan(plan);
+
+    } catch (err) {
+        alert(`Could not build your study plan: ${err.message}`);
+    } finally {
+        studyPlanBtn.disabled = false;
+        studyPlanBtn.querySelector('.sp-btn-text').textContent = 'Get study plan to excel';
+    }
+}
+
+function renderStudyPlan(plan) {
+    // --- Header ---
+    spDomainTitle.textContent = plan.domain || domainInput.value.trim();
+    spDomainDesc.textContent = plan.description || '';
+
+    const levelColors = { Beginner: '#4ade80', Intermediate: '#60a5fa', Advanced: '#f472b6' };
+    spSkillLevelBadge.textContent = `Your Level: ${plan.skill_level}`;
+    spSkillLevelBadge.style.background = levelColors[plan.skill_level] || '#ACC8A2';
+
+    // --- Found Chips ---
+    spFoundChips.innerHTML = '';
+    (plan.found_skills || []).forEach(skill => {
+        const chip = document.createElement('span');
+        chip.className = 'sp-chip sp-chip-found';
+        chip.textContent = skill;
+        spFoundChips.appendChild(chip);
+    });
+    if (!plan.found_skills || plan.found_skills.length === 0) {
+        spFoundChips.innerHTML = '<span class="sp-chip-empty">None matched yet — keep building!</span>';
+    }
+
+    // --- Missing Chips ---
+    spMissingChips.innerHTML = '';
+    (plan.missing_skills || []).forEach(skill => {
+        const chip = document.createElement('span');
+        chip.className = 'sp-chip sp-chip-missing';
+        chip.textContent = skill;
+        spMissingChips.appendChild(chip);
+    });
+
+    // --- Motivation Banner ---
+    const scoreInt = Math.round(plan.score || 0);
+    spMotivationText.textContent =
+        `Your study plan to go from ${scoreInt}% to a 100% expert in ${plan.domain || 'this domain'}!`;
+
+    // --- Week Plan ---
+    spWeekPlan.innerHTML = '';
+    if (!plan.weeks || plan.weeks.length === 0) {
+        spWeekPlan.innerHTML = '<p class="sp-no-plan">🎉 You already have all the skills — you\'re an expert!</p>';
+    } else {
+        plan.weeks.forEach((weekData, idx) => {
+            const box = renderWeekBox(weekData, idx);
+            spWeekPlan.appendChild(box);
+        });
+    }
+
+    // --- Show modal with entrance animation ---
+    spOverlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // Staggered entrance for week boxes
+    setTimeout(() => {
+        const boxes = spWeekPlan.querySelectorAll('.sp-week-box');
+        boxes.forEach((box, i) => {
+            box.style.animationDelay = `${i * 0.12}s`;
+            box.classList.add('sp-week-box--visible');
+        });
+    }, 80);
+}
+
+function renderWeekBox(weekData, idx) {
+    const box = document.createElement('div');
+    box.className = 'sp-week-box';
+
+    const weekThemes = ['#ACC8A2', '#8FA87E', '#6B8E5E', '#4f7042', '#3a5530', '#2D3A28'];
+    const accentColor = weekThemes[idx % weekThemes.length];
+
+    box.innerHTML = `
+        <div class="sp-week-label" style="border-color: ${accentColor};">
+            <span class="sp-week-number">Week</span>
+            <span class="sp-week-num-large">${weekData.week}</span>
+        </div>
+        <div class="sp-week-content"></div>
+    `;
+
+    const content = box.querySelector('.sp-week-content');
+
+    weekData.skills.forEach(skillObj => {
+        const skillRow = document.createElement('div');
+        skillRow.className = 'sp-skill-row';
+
+        // Source icon map
+        const sourceIcon = {
+            'YouTube': '▶',
+            'W3Schools': 'W',
+            'GeeksForGeeks': 'G',
+            'MDN': 'M',
+            'Official Docs': '📄',
+            'GitHub': '⬡',
+        };
+
+        const resourcesHtml = skillObj.resources.map(r => {
+            const icon = sourceIcon[r.source] || '🔗';
+            const meta = [r.duration, r.views, r.level_tag].filter(Boolean).join(' · ');
+            const metaHtml = meta ? `<span class="sp-link-meta">${meta}</span>` : '';
+            return `
+                <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="sp-resource-link" title="${r.title}">
+                    <span class="sp-link-icon sp-src-${r.source.replace(/\s+/g, '-').toLowerCase()}">${icon}</span>
+                    <span class="sp-link-body">
+                        <span class="sp-link-title">${r.title}</span>
+                        ${metaHtml}
+                    </span>
+                    <span class="sp-link-ext">↗</span>
+                </a>`;
+        }).join('');
+
+        skillRow.innerHTML = `
+            <div class="sp-skill-name">
+                <span class="sp-skill-dot" style="background:${accentColor}"></span>
+                ${skillObj.skill}
+            </div>
+            <div class="sp-resources-col">${resourcesHtml}</div>
+        `;
+        content.appendChild(skillRow);
+    });
+
+    return box;
+}
+
+function closeStudyPlan() {
+    spOverlay.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// ─── PDF Export ───────────────────────────────────────────────────────────────
+async function downloadStudyPlan() {
+    if (!currentStudyPlan) return;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const PAGE_W = 210;
+    const PAGE_H = 297;
+    const MARGIN = 18;
+    const CONTENT_W = PAGE_W - MARGIN * 2;
+    const OLIVE = [26, 37, 23];
+    const SAGE = [172, 200, 162];
+    const WHITE = [255, 255, 255];
+    const MUTED = [80, 80, 80];
+
+    let y = 0;
+
+    function checkPage(needed = 10) {
+        if (y + needed > PAGE_H - 14) {
+            doc.addPage();
+            y = MARGIN;
+            drawPageBranding();
+        }
+    }
+
+    function drawPageBranding() {
+        // Top bar
+        doc.setFillColor(...OLIVE);
+        doc.rect(0, 0, PAGE_W, 10, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(...SAGE);
+        doc.setFont('helvetica', 'bold');
+        doc.text('CAREER TRAJECTORY  |  PERSONALIZED STUDY PLAN', MARGIN, 6.5);
+
+        // Bottom bar
+        doc.setFillColor(...SAGE);
+        doc.rect(0, PAGE_H - 8, PAGE_W, 8, 'F');
+        doc.setFontSize(6.5);
+        doc.setTextColor(...OLIVE);
+        doc.text('Generated by Career Trajectory AI  •  Your path to mastery starts here.', MARGIN, PAGE_H - 3.5);
+    }
+
+    // ── Cover ──────────────────────────────────────────────────────────────────
+    doc.setFillColor(...OLIVE);
+    doc.rect(0, 0, PAGE_W, 60, 'F');
+
+    // Decorative sage stripe
+    doc.setFillColor(...SAGE);
+    doc.rect(0, 58, PAGE_W, 3, 'F');
+
+    doc.setFontSize(7);
+    doc.setTextColor(...SAGE);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CAREER TRAJECTORY', MARGIN, 16);
+
+    doc.setFontSize(22);
+    doc.setTextColor(...WHITE);
+    doc.setFont('helvetica', 'bold');
+    const titleLines = doc.splitTextToSize(`Personalized Study Plan: ${currentStudyPlan.domain}`, CONTENT_W);
+    doc.text(titleLines, MARGIN, 30);
+
+    doc.setFontSize(10);
+    doc.setTextColor(...SAGE);
+    doc.setFont('helvetica', 'normal');
+    doc.text(currentStudyPlan.description, MARGIN, 30 + titleLines.length * 9 + 4, { maxWidth: CONTENT_W });
+
+    y = 72;
+    drawPageBranding();
+
+    // ── Level Badge ────────────────────────────────────────────────────────────
+    const levelColors = { Beginner: [74, 222, 128], Intermediate: [96, 165, 250], Advanced: [244, 114, 182] };
+    const lc = levelColors[currentStudyPlan.skill_level] || SAGE;
+    doc.setFillColor(...lc);
+    doc.roundedRect(MARGIN, y, 50, 8, 2, 2, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(...OLIVE);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Your Level: ${currentStudyPlan.skill_level}`, MARGIN + 4, y + 5.5);
+    y += 14;
+
+    // ── Skills You Have ────────────────────────────────────────────────────────
+    checkPage(20);
+    doc.setFontSize(11);
+    doc.setTextColor(...OLIVE);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Skills You Have', MARGIN, y);
+    y += 5;
+    doc.setFillColor(...SAGE);
+    doc.rect(MARGIN, y, CONTENT_W, 0.5, 'F');
+    y += 4;
+
+    const foundSkillsList = currentStudyPlan.found_skills || [];
+    if (foundSkillsList.length > 0) {
+        let chipX = MARGIN;
+        foundSkillsList.forEach(skill => {
+            const tw = doc.getTextWidth(skill) + 8;
+            if (chipX + tw > PAGE_W - MARGIN) { chipX = MARGIN; y += 8; checkPage(8); }
+            doc.setFillColor(220, 237, 215);
+            doc.roundedRect(chipX, y - 4, tw, 6, 1.5, 1.5, 'F');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...OLIVE);
+            doc.setFont('helvetica', 'normal');
+            doc.text(skill, chipX + 4, y + 0.5);
+            chipX += tw + 3;
+        });
+        y += 10;
+    } else {
+        doc.setFontSize(9); doc.setTextColor(...MUTED);
+        doc.text('None matched yet.', MARGIN, y); y += 8;
+    }
+
+    // ── Skills to Acquire ──────────────────────────────────────────────────────
+    checkPage(20);
+    doc.setFontSize(11);
+    doc.setTextColor(...OLIVE);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Skills to Acquire', MARGIN, y);
+    y += 5;
+    doc.setFillColor(...SAGE);
+    doc.rect(MARGIN, y, CONTENT_W, 0.5, 'F');
+    y += 4;
+
+    const missingSkillsList = currentStudyPlan.missing_skills || [];
+    if (missingSkillsList.length > 0) {
+        let chipX = MARGIN;
+        missingSkillsList.forEach(skill => {
+            const tw = doc.getTextWidth(skill) + 8;
+            if (chipX + tw > PAGE_W - MARGIN) { chipX = MARGIN; y += 8; checkPage(8); }
+            doc.setFillColor(200, 215, 190);
+            doc.roundedRect(chipX, y - 4, tw, 6, 1.5, 1.5, 'F');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...OLIVE);
+            doc.setFont('helvetica', 'normal');
+            doc.text(skill, chipX + 4, y + 0.5);
+            chipX += tw + 3;
+        });
+        y += 10;
+    }
+
+    // ── Motivation Banner ──────────────────────────────────────────────────────
+    checkPage(16);
+    doc.setFillColor(...OLIVE);
+    doc.roundedRect(MARGIN, y, CONTENT_W, 12, 3, 3, 'F');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...SAGE);
+    doc.setFont('helvetica', 'bold');
+    const motText = `🚀 Your study plan to go from ${Math.round(currentStudyPlan.score || 0)}% to a 100% expert in ${currentStudyPlan.domain}!`;
+    doc.text(motText, MARGIN + 5, y + 7.8, { maxWidth: CONTENT_W - 10 });
+    y += 18;
+
+    // ── Week Plans ─────────────────────────────────────────────────────────────
+    const weekAccents = [[172, 200, 162], [143, 168, 126], [107, 142, 94], [79, 112, 66], [58, 85, 48], [45, 58, 40]];
+
+    (currentStudyPlan.weeks || []).forEach((weekData, idx) => {
+        checkPage(24);
+        const accent = weekAccents[idx % weekAccents.length];
+
+        // Week header bar
+        doc.setFillColor(...accent);
+        doc.roundedRect(MARGIN, y, CONTENT_W, 9, 2, 2, 'F');
+        doc.setFontSize(10);
+        doc.setTextColor(...OLIVE);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Week ${weekData.week}`, MARGIN + 5, y + 6.2);
+        y += 12;
+
+        weekData.skills.forEach(skillObj => {
+            checkPage(10);
+            // Skill name
+            doc.setFontSize(9);
+            doc.setTextColor(...OLIVE);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`• ${skillObj.skill}`, MARGIN + 4, y);
+            y += 5;
+
+            // Resources
+            skillObj.resources.forEach(r => {
+                checkPage(8);
+                doc.setFontSize(8);
+                doc.setTextColor(...MUTED);
+                doc.setFont('helvetica', 'normal');
+
+                const meta = [r.source, r.duration, r.views, r.level_tag].filter(Boolean).join(' · ');
+                const titleText = doc.splitTextToSize(`  ↗ ${r.title}`, CONTENT_W - 20);
+                doc.text(titleText, MARGIN + 10, y);
+                y += titleText.length * 4.5;
+
+                if (meta) {
+                    doc.setFontSize(7);
+                    doc.setTextColor(120, 140, 110);
+                    doc.text(`     ${meta}`, MARGIN + 10, y);
+                    y += 4;
+                }
+
+                // Clickable URL
+                doc.setFontSize(7);
+                doc.setTextColor(26, 37, 23);
+                const urlText = r.url.length > 70 ? r.url.substring(0, 67) + '…' : r.url;
+                doc.textWithLink(`     ${urlText}`, MARGIN + 10, y, { url: r.url });
+                y += 5.5;
+            });
+            y += 3;
+        });
+        y += 4;
+    });
+
+    const filename = `Study_Plan_${(currentStudyPlan.domain || 'Career').replace(/\s+/g, '_')}.pdf`;
+    doc.save(filename);
+}
