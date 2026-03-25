@@ -1,13 +1,18 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-import fitz  # PyMuPDF
-from docx import Document
-import os
-import re
-import json
-from werkzeug.utils import secure_filename
-from groq import Groq
-from dotenv import load_dotenv
+"""
+Main Flask backend application handling API routes for resume processing, 
+career analysis, chatbot interactions, and study plan generation.
+"""
+
+from flask import Flask, request, jsonify, send_from_directory # Web framework and request handling
+from flask_cors import CORS # Cross-origin resource sharing support
+import fitz  # PDF parsing (PyMuPDF)
+from docx import Document # MS Word document parsing
+import os # OS-level directory and environment management
+import re # Regular expressions for text cleaning
+import json # JSON data serialization and parsing
+from werkzeug.utils import secure_filename # Secure file upload handling
+from groq import Groq # Interface for Groq AI models
+from dotenv import load_dotenv # Environment variable loader
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +43,7 @@ if GROQ_API_KEY:
 CAREER_DOMAINS_SUMMARY = ", ".join(CAREER_METADATA.keys())
 
 def clean_text(text):
+    """Sanitizes raw text by removing special characters and extra spaces."""
     text = text.replace('|', ' ').replace(':', ' ').replace('/', ' ')
     return re.sub(r'\s+', ' ', text).strip()
 
@@ -45,6 +51,7 @@ def clean_text(text):
 
 @app.route('/api/upload', methods=['POST'])
 def upload_resume():
+    """Handles resume uploads, extracts text/skills, and prepares chatbot context."""
     file = request.files.get('file')
     if not file: return jsonify({'error': 'No file'}), 400
     
@@ -82,6 +89,7 @@ def upload_resume():
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_career():
+    """Performs detailed skill gap analysis between user skills and target domain."""
     data = request.json
     # These are the skills returned by the upload route
     user_skills = data.get('skills', [])
@@ -107,6 +115,7 @@ def analyze_career():
 
 @app.route('/api/confused', methods=['POST'])
 def career_confused():
+    """Suggests potential career paths based on existing skills match (>30%)."""
     data = request.json
     user_skills = data.get('skills', [])
     
@@ -121,6 +130,7 @@ def career_confused():
 
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot():
+    """Manages AI career advisor conversation using Groq and resume context."""
     if not groq_client:
         return jsonify({'error': 'Groq API key not configured. Set GROQ_API_KEY in your .env file.'}), 500
     
@@ -202,6 +212,7 @@ def chatbot():
 
 @app.route('/api/study-plan', methods=['POST'])
 def get_study_plan():
+    """Generates a structured multi-week learning resource plan for missing skills."""
     data = request.json
     missing_skills = data.get('missing_skills', [])
     found_skills   = data.get('found_skills', [])
@@ -225,14 +236,16 @@ def get_study_plan():
         'score':       score,
     })
 
-# --- SERVE FRONTEND (STRICTLY NO JINJA) ---
+# --- SERVE FRONTEND ---
 @app.route('/')
 def index():
+    """Serves the main HTML frontend from the root directory."""
     # Serves your index.html directly from the root folder
     return send_from_directory('.', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
+    """Delivers static assets such as CSS, JS, and image files."""
     # Serves your style.css, script.js, and images
     return send_from_directory('.', path)
 

@@ -1,13 +1,14 @@
+<!-- 
+    Main HTML structure for the Career Trajectory Prediction application.
+    Contains the single-page interface for resume uploading, career analysis,
+    dynamic roadmaps, and the AI career advisor chatbot.
+-->
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Career Trajectory | AI-Powered Path Analysis</title>
 
     <link rel="stylesheet" href="styles.css">
@@ -53,8 +54,7 @@
 
         </header>
 
-
-
+        <!-- Initial Input Section: File Upload and Domain Selection -->
         <section class="input-section" id="inputSection">
 
             <div class="upload-container">
@@ -133,7 +133,8 @@
         <section class="confused-section" id="confusedSection" style="display: none;">
             <header class="confused-header">
                 <h2 class="confused-title">Potential Career Paths</h2>
-                <p class="confused-subtitle">Based on your skills, explore these domains where you have a significant head start.</p>
+                <p class="confused-subtitle">Based on your skills, explore these domains where you have a significant
+                    head start.</p>
             </header>
             <div class="career-cards-grid" id="careerCardsGrid"></div>
             <button class="reset-btn" id="resetConfusedBtn">Back to Upload</button>
@@ -142,12 +143,12 @@
         <!-- Detailed Career View (Full analysis of a selected card) -->
         <section class="detailed-career-section" id="detailedCareerView" style="display: none;">
             <button class="back-to-cards" id="backToCardsBtn">← Back to suggestions</button>
-            
+
             <div class="detailed-header">
                 <h2 class="detailed-title" id="detailedTitle"></h2>
                 <div class="detailed-score-badge" id="detailedScoreBadge"></div>
             </div>
-            
+
             <div class="detailed-content-grid">
                 <div class="detailed-left detailed-column">
                     <h3 class="detailed-label">Domain Description</h3>
@@ -171,6 +172,7 @@
 
         <section class="results-section" id="resultsSection" style="display: none;">
 
+            <!-- Primary Analysis Results Section: Match Score and Skill Lists -->
             <div class="score-display">
 
                 <div class="score-circle" id="scoreCircle">
@@ -289,11 +291,9 @@
     </main>
 
 
-
-    <!-- ============================================================
-         STUDY PLAN MODAL
-         ============================================================ -->
-    <div class="sp-overlay" id="spOverlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Study Plan">
+    <!-- Interactive Study Plan Modal Overlay -->
+    <div class="sp-overlay" id="spOverlay" style="display:none;" role="dialog" aria-modal="true"
+        aria-label="Study Plan">
         <div class="sp-card" id="spCard">
 
             <!-- Close Button -->
@@ -345,6 +345,7 @@
         <span class="toggle-pulse"></span>
     </button>
 
+    <!-- AI Career Advisor Chatbot Interface -->
     <div class="chatbot-panel" id="chatbotPanel">
         <div class="chatbot-header">
             <button class="chatbot-back-btn" id="chatbotBackBtn" aria-label="Go back" title="Undo last exchange"

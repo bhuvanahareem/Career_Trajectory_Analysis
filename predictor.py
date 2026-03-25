@@ -1,9 +1,14 @@
-import os
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-import re
-import json
-import torch
-from transformers import BertTokenizer, BertForSequenceClassification
+"""
+Core AI logic for predicting career paths, analyzing skill gaps, 
+and extracting skills from text using a trained BERT model.
+"""
+
+import os # OS utilities for environment and paths
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" # Prevent duplicate library execution errors
+import re # regex for skill extraction
+import json # metadata parsing
+import torch # Main deep learning framework
+from transformers import BertTokenizer, BertForSequenceClassification # BERT model and tokenizer
 
 
 
@@ -34,7 +39,9 @@ CAREER_METADATA = {
 }
 
 class CareerPredictor:
+    """Class to handle career prediction and skill gap analysis using a BERT model."""
     def __init__(self):
+        """Initializes the BERT model, tokenizer, and skill metadata."""
         self.model_path = os.path.abspath('final_skill_model')
         
         # Load the Skill Metadata (The AI's "Vocabulary" AND Structure)
@@ -93,6 +100,7 @@ class CareerPredictor:
         return "Full Stack Developer" # Default fallback
 
     def analyze(self, resume_skills, target_domain):
+        """Compares user skills against target requirements to calculate match scores."""
         category_key = self.get_best_category(target_domain)
         all_required = self.get_model_required_skills(category_key)
         
@@ -209,6 +217,7 @@ class CareerPredictor:
 predictor_instance = CareerPredictor()
 
 def extract_skills_from_text(text):
+    """Scans input text for matches against the global skill vocabulary using regex."""
     found_skills = set()
     text_lower = text.lower()
     
@@ -229,7 +238,9 @@ def extract_skills_from_text(text):
     return list(found_skills)
 
 def analyze_skill_gap(resume_skills, target_domain):
+    """Wrapper function to perform skill gap analysis for a specific target domain."""
     return predictor_instance.analyze(resume_skills, target_domain)
 
 def analyze_confused_paths(resume_skills):
+    """Wrapper function to find alternative career paths for the user's skills."""
     return predictor_instance.analyze_confused(resume_skills)

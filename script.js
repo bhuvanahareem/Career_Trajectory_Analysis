@@ -1,13 +1,19 @@
+/**
+ * Frontend logic for the Career Trajectory Prediction application.
+ * Manages file uploads, career analysis results, interactive roadmaps, 
+ * chatbot communication, and study plan generation.
+ */
+
 // Detect if running from Flask server or direct file access
 const API_BASE = window.location.protocol === 'file:'
     ? 'http://localhost:5000/api'
     : '/api';
 
-// State management
+// State management: Stores extracted skills, files, and analysis data
 let state = {
-    resumeSkills: [],
-    uploadedFile: null,
-    analysisResult: null
+    resumeSkills: [], // List of skills found in the resume
+    uploadedFile: null, // Currently uploaded file object
+    analysisResult: null // Cached result from the last career analysis
 };
 
 // DOM Elements
@@ -38,7 +44,7 @@ const specialMessage = document.getElementById('specialMessage');
 
 let skillChart = null;
 
-// Initialize Mermaid
+// Initialize Mermaid: Configures the charting engine for roadmaps
 mermaid.initialize({
     startOnLoad: false,
     theme: 'default',
@@ -71,6 +77,7 @@ function handleDragLeave(e) {
 }
 
 function handleDrop(e) {
+    /** Processes a file dropped into the drag-and-drop zone. */
     e.preventDefault();
     dropZone.classList.remove('dragover');
     const files = e.dataTransfer.files;
@@ -87,6 +94,7 @@ function handleFileSelect(e) {
 }
 
 async function processFile(file) {
+    /** Validates the file, uploads it to the server, and extracts skills. */
     if (!file.type.includes('pdf') && !file.name.endsWith('.docx')) {
         alert('Please upload a PDF or DOCX file');
         return;
@@ -133,6 +141,7 @@ async function processFile(file) {
 }
 
 function clearFile() {
+    /** Resets the file upload state and UI. */
     state.uploadedFile = null;
     state.resumeSkills = [];
     fileInput.value = '';
@@ -155,6 +164,7 @@ const detailedRoadmap = document.getElementById('detailedRoadmap');
 const resetConfusedBtn = document.getElementById('resetConfusedBtn');
 
 function checkAnalyzeButton() {
+    /** Enables/disables the analyze button based on required input presence. */
     const hasFile = state.uploadedFile !== null;
     const hasDomain = domainInput.value.trim().length > 0;
     analyzeBtn.disabled = !(hasFile && hasDomain);
@@ -166,6 +176,7 @@ confusedBtn.addEventListener('click', fetchConfusedResults);
 analyzeBtn.addEventListener('click', performAnalysis);
 
 async function performAnalysis() {
+    /** Submits skills and domain to the server for match analysis. */
     const domain = domainInput.value.trim();
     if (!domain || state.resumeSkills.length === 0) {
         return;
@@ -200,6 +211,7 @@ async function performAnalysis() {
 }
 
 async function fetchConfusedResults() {
+    /** Retrieves alternative career path match results from the server. */
     if (state.resumeSkills.length === 0) return;
 
     showLoading();
@@ -227,6 +239,7 @@ async function fetchConfusedResults() {
 }
 
 function displayResults(data) {
+    /** Updates the dashboard with scores, skill levels, and roadmaps. */
     // Standard UI Transitions
     inputSection.style.display = 'none';
     resultsSection.style.display = 'block';
@@ -390,6 +403,7 @@ function animateValue(element, start, end, duration) {
 }
 
 function updateSkillsList(container, skills, type) {
+    /** Populates the found/missing skill UI containers with list items. */
     container.innerHTML = '';
     if (!skills || skills.length === 0) {
         const li = document.createElement('li');
@@ -408,6 +422,7 @@ function updateSkillsList(container, skills, type) {
 }
 
 function createSkillChart(foundCount, missingCount) {
+    /** Generates a pie chart comparing found vs missing skills using Chart.js. */
     const ctx = document.getElementById('skillChart').getContext('2d');
     if (skillChart) skillChart.destroy();
 
@@ -435,6 +450,7 @@ function createSkillChart(foundCount, missingCount) {
 }
 
 function renderWavyRoadmap(allSkillsByTier, domain, containerId) {
+    /** Procedurally generates an SVG-based interactive visual guide for the career path. */
     const container = document.getElementById(containerId);
 
     // Set title if it's the main roadmap container
@@ -630,6 +646,7 @@ chatbotBackBtn.addEventListener('click', () => {
 });
 
 function sendInitialGreeting() {
+    /** Sends the first advisor message based on whether a resume was uploaded. */
     let greeting;
     if (state.resumeSkills && state.resumeSkills.length > 0) {
         greeting = "I've reviewed the skills from your resume. What are your current interests? I'd love to help you figure out the best next step in your career.";
@@ -643,6 +660,7 @@ function sendInitialGreeting() {
 }
 
 async function sendChatMessage() {
+    /** Forwards user messages to the Groq-powered chatbot backend. */
     const text = chatbotInput.value.trim();
     if (!text || isSending) return;
 
@@ -788,6 +806,7 @@ document.addEventListener('keydown', (e) => {
 spDownloadBtn.addEventListener('click', downloadStudyPlan);
 
 async function openStudyPlan() {
+    /** Fetches or builds the educational curriculum based on missing skills. */
     if (!state.analysisResult) return;
     const data = state.analysisResult;
 
@@ -946,7 +965,7 @@ function closeStudyPlan() {
     document.body.style.overflow = '';
 }
 
-// ─── PDF Export ───────────────────────────────────────────────────────────────
+// ─── PDF Export ─── Generates and downloads a structured PDF study guide
 async function downloadStudyPlan() {
     if (!currentStudyPlan) return;
 

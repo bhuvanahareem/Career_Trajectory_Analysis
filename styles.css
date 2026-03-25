@@ -1,3 +1,7 @@
+/*
+    Core Design System: Defines the primary color palette and variables 
+    used for the Career Trajectory aesthetic (Sage/Olive theme).
+*/
 :root {
     --primary-sage: #ACC8A2;
     --secondary-olive: #1A2517;
@@ -86,7 +90,7 @@ body {
     z-index: 1;
 }
 
-/* Header */
+/* Main Application Header: Title and branding section */
 .header {
     text-align: center;
     margin-bottom: 4rem;
@@ -124,7 +128,7 @@ body {
     margin-top: 1.5rem;
 }
 
-/* Input Section */
+/* User Input Sections: File upload and career domain selection */
 .input-section {
     margin-bottom: 3rem;
 }
@@ -348,7 +352,7 @@ body {
     transform: translateX(4px);
 }
 
-/* Results Section */
+/* Results Display: Match metrics, skill charts, and roadmaps */
 .results-section {
     animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -664,7 +668,7 @@ body {
     font-weight: 500;
 }
 
-/* Wavy Roadmap Component */
+/* Wavy Roadmap Component: Custom SVG-based career lifecycle visualization */
 .wavy-roadmap-section {
     margin-top: 3rem;
     padding: 2.5rem;

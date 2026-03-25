@@ -10,13 +10,13 @@ Falls back to a curated static library if YOUTUBE_API_KEY is not set
 or API quota is exceeded.
 """
 
-import re
-import json
-import math
-import logging
-import urllib.request
-import urllib.parse
-import urllib.error
+import re # Regular expressions for duration and title parsing
+import json # JSON handling for API responses
+import math # Mathematical operations for ranking
+import logging # System logging
+import urllib.request # Standard HTTP requests
+import urllib.parse # URL encoding
+import urllib.error # HTTP error handling
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +224,7 @@ SKILL_DESCRIPTIONS = {
 
 # Generic fallback description generator
 def _get_generic_description(skill: str) -> str:
+    """Generates a default help description for skills missing from the metadata."""
     return f"Resources and path to master {skill}, covering core concepts and practical implementations."
 
 # ──────────────────────────────────────────────
@@ -237,6 +238,7 @@ _YT_BASE             = "https://www.googleapis.com/youtube/v3"
 
 
 def _format_views(n: int) -> str:
+    """Converts large view counts into readable strings (e.g., 1.5M)."""
     if n >= 1_000_000:
         return f"{n / 1_000_000:.1f}M"
     if n >= 1_000:
@@ -260,11 +262,14 @@ def _iso8601_to_seconds(duration: str) -> tuple[str, int]:
 # ResourceBroker
 # ──────────────────────────────────────────────
 class ResourceBroker:
+    """Orchestrates resource fetching and study plan building for missing skills."""
     def __init__(self, youtube_api_key: str = ""):
+        """Initializes the broker with an optional YouTube API key."""
         self.api_key = youtube_api_key.strip() if youtube_api_key else ""
 
     # Public: score → level label
     def get_skill_level(self, score: float) -> str:
+        """Assigns a proficiency label (Beginner/Intermediate/Advanced) based on match score."""
         if score < 40:
             return "Beginner"
         elif score < 70:
@@ -273,6 +278,7 @@ class ResourceBroker:
 
     # ── YouTube helpers ──────────────────────────────
     def _build_query(self, skill: str, level: str) -> str:
+        """Constructs specific search terms to find high-quality educational videos."""
         # We want to be very specific to avoid "Networking" returning "Networking HTML"
         # Using quotes around the skill name helps with exact matching in YouTube search
         if level == "Beginner":
@@ -284,6 +290,7 @@ class ResourceBroker:
         return f'"{skill}" {suffix}'
 
     def _parse_level_from_title(self, title: str) -> str:
+        """Infers the difficulty level of a video based on keywords in its title."""
         t = title.lower()
         if any(kw in t for kw in _ADVANCED_KEYWORDS):
             return "Advanced"
@@ -438,6 +445,7 @@ class ResourceBroker:
 
     # Fallback: look up static library
     def _static_fallback(self, skill: str, level: str) -> list:
+        """Provides hardcoded educational links when the API is unavailable."""
         skill_lower = skill.lower()
         # Exact match first
         if skill_lower in STATIC_FALLBACK_LIBRARY:
@@ -496,6 +504,7 @@ class ResourceBroker:
         return resources, False
 
     def _get_skill_desc(self, skill: str) -> str:
+        """Retrieves a concise summary for a skill from the internal description database."""
         s = skill.lower().strip()
         if s in SKILL_DESCRIPTIONS:
             return SKILL_DESCRIPTIONS[s]
@@ -540,6 +549,7 @@ class ResourceBroker:
 
     # Public: build the full plan
     def build_study_plan(self, missing_skills: list, score: float) -> list:
+        """Generates the complete multi-week learning curriculum with resources."""
         level   = self.get_skill_level(score)
         buckets = self._distribute_skills(missing_skills)
         weeks   = []

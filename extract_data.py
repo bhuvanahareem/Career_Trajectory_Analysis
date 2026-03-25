@@ -1,9 +1,14 @@
-import os
-import json
-from groq import Groq
-from pydantic import BaseModel, Field
-from typing import List, Optional
-from dotenv import load_dotenv
+"""
+Utilities for extracting structured career data and chatbot context 
+from resume text using Groq AI models and Pydantic schemas.
+"""
+
+import os # OS utilities for environment variables
+import json # JSON data manipulation
+from groq import Groq # Groq AI API interface
+from pydantic import BaseModel, Field # Schema definition and field validation
+from typing import List, Optional # Type hinting for complex structures
+from dotenv import load_dotenv # .env file configuration loader
 
 load_dotenv()
 
@@ -12,12 +17,14 @@ load_dotenv()
 # =============================================
 
 class Experience(BaseModel):
+    """Represents a single professional experience entry with structured details."""
     title: str = Field(description="The professional job title held")
     company: str = Field(description="The name of the company")
     duration: str = Field(description="The time period worked (e.g., 'Jan 2020 - December 2023')")
     responsibilities: List[str] = Field(description="A list of 3-4 key responsibilities or achievements")
 
 class ResumeData(BaseModel):
+    """Schema for parsing complete resume data including contact, skills, and history."""
     name: str = Field(description="The full name of the candidate")
     email: str = Field(description="The email address of the candidate")
     skills: List[str] = Field(description="A list of 10-15 core technical and core skills")
@@ -75,10 +82,8 @@ def extract_resume_data(resume_text: str, api_key: str) -> str:
 
 
 def extract_chatbot_context(resume_text: str, api_key: str) -> dict:
-    """
-    Extracts career-relevant context from a resume to provide personalized
-    chatbot conversations. Used by the Career Advisor chatbot.
-    """
+    """Distills career status and interests from a resume for chatbot personalization."""
+    
     if not api_key:
         return {}
     

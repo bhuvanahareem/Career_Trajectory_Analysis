@@ -1,13 +1,18 @@
-import os
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+"""
+Self-contained script to train a BERT sequence classifier to map 
+job titles to required sets of skills based on provided knowledge.
+"""
 
-import json
-import torch
-import torch.optim as optim
-from torch.optim import AdamW
-import numpy as np
-from transformers import BertTokenizer, BertForSequenceClassification
-from torch.utils.data import DataLoader, Dataset
+import os # OS utilities for paths and memory management
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" # Prevent duplicate library execution errors
+
+import json # training data parsing
+import torch # Main deep learning framework
+import torch.optim as optim # Optimization algorithms
+from torch.optim import AdamW # AdamW optimizer for BERT
+import numpy as np # Vector operations for multi-label targets
+from transformers import BertTokenizer, BertForSequenceClassification # BERT model components
+from torch.utils.data import DataLoader, Dataset # data batching and dataset utilities
 
 # 1. Load Knowledge and sync ALL_SKILLS
 with open('skills_knowledge.json', 'r') as f:
@@ -24,6 +29,7 @@ for job in knowledge.values():
 ALL_SKILLS = sorted(ALL_SKILLS)
 
 class CareerDataset(Dataset):
+    """Custom Dataset for mapping job titles to multi-hot skill vectors."""
     def __init__(self, knowledge, tokenizer):
         self.samples = []
         for job_title, tiers in knowledge.items():
