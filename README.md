@@ -22,12 +22,18 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
 
-3. Run the Flask server:
+
+3. Train the model:
+```bash
+python trainer.py
+```
+
+4. Run the Flask server:
 ```bash
 python app.py
 ```
 
-4. Open `index.html` in your browser or serve via Flask
+5. Open `index.html` in your browser or serve via Flask
 
 ## Tech Stack
 
