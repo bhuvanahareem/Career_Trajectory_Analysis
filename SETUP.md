@@ -42,3 +42,4 @@
 - **File upload errors**: Check file size (max 10MB) and format (PDF/DOCX only)
 - **spaCy errors**: Verify `en_core_web_sm` is installed: `python -m spacy validate`
 
+
