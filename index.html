@@ -58,6 +58,7 @@
         <section class="input-section" id="inputSection">
 
             <div class="upload-container">
+                <p class="section-hint" id="uploadHint">Upload your CV (PDF/DOCX) to begin your AI-powered career journey.</p>
 
                 <div class="drop-zone" id="dropZone">
 
@@ -101,6 +102,7 @@
             <div class="domain-input-container">
 
                 <label for="domainInput" class="input-label">Target Career Domain</label>
+                <p class="section-hint domain-hint">Enter a job role to see how your skills match and get a 4-week learning roadmap.</p>
 
                 <div class="input-wrapper">
 
@@ -109,7 +111,7 @@
 
                     <button class="analyze-btn" id="analyzeBtn" disabled>
 
-                        <span class="btn-text">Analyze</span>
+                        <span class="btn-text">Analyse</span>
 
                         <span class="btn-icon">→</span>
 
@@ -117,11 +119,11 @@
 
                 </div>
 
-                <!-- New Confused Button -->
+                <!-- Career Path Button -->
                 <div class="confused-btn-container" style="text-align: center; margin-top: 2rem;">
                     <button class="confused-btn" id="confusedBtn" disabled>
-                        <span class="btn-text">Confused</span>
-                        <span class="btn-icon">?</span>
+                        <span class="btn-text">Check potential career path</span>
+                        <span class="btn-icon">✦</span>
                     </button>
                 </div>
 
@@ -133,11 +135,10 @@
         <section class="confused-section" id="confusedSection" style="display: none;">
             <header class="confused-header">
                 <h2 class="confused-title">Potential Career Paths</h2>
-                <p class="confused-subtitle">Based on your skills, explore these domains where you have a significant
-                    head start.</p>
+                <p class="confused-subtitle">Based on your current skills, here are the roles where you have a 30%+ head start.</p>
             </header>
             <div class="career-cards-grid" id="careerCardsGrid"></div>
-            <button class="reset-btn" id="resetConfusedBtn">Back to Upload</button>
+            <button class="reset-btn" id="resetConfusedBtn">← Back</button>
         </section>
 
         <!-- Detailed Career View (Full analysis of a selected card) -->
@@ -274,7 +275,7 @@
 
 
 
-            <button class="reset-btn" id="resetBtn">Start New Analysis</button>
+            <button class="reset-btn" id="resetBtn">← Back</button>
 
         </section>
 
@@ -284,7 +285,7 @@
 
             <div class="loading-spinner"></div>
 
-            <p class="loading-text">Analyzing your career trajectory...</p>
+            <p class="loading-text" id="loadingText"></p>
 
         </div>
 

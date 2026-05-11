@@ -128,13 +128,31 @@ body {
     margin-top: 1.5rem;
 }
 
+/* Section Hint — short helper text beneath section headings / labels */
+.section-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 1rem;
+    margin-top: 0.25rem;
+    border-left: 2px solid var(--primary-sage);
+    padding-left: 0.65rem;
+    line-height: 1.5;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+
+.section-hint:hover {
+    opacity: 1;
+}
+
 /* User Input Sections: File upload and career domain selection */
 .input-section {
     margin-bottom: 3rem;
 }
 
 .upload-container {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
 }
 
 .drop-zone {
@@ -607,7 +625,7 @@ body {
     line-height: 1.6;
 }
 
-/* Reset Button */
+/* Reset / Back Button */
 .reset-btn {
     display: block;
     margin: 3rem auto 0;
@@ -666,6 +684,9 @@ body {
     font-size: 1.1rem;
     color: var(--secondary-olive);
     font-weight: 500;
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.4;
 }
 
 /* Wavy Roadmap Component: Custom SVG-based career lifecycle visualization */

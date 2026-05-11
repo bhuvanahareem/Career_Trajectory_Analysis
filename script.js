@@ -16,6 +16,13 @@ let state = {
     analysisResult: null // Cached result from the last career analysis
 };
 
+/**
+ * Persists the full resume upload API response so the user never has to
+ * re-upload when navigating back from Analysis or Career Path screens.
+ * Shape: { skills, text, chatbotContext, filename }
+ */
+let currentResumeData = null;
+
 // DOM Elements
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -27,6 +34,7 @@ const analyzeBtn = document.getElementById('analyzeBtn');
 const inputSection = document.getElementById('inputSection');
 const resultsSection = document.getElementById('resultsSection');
 const loadingOverlay = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
 const scoreCircle = document.getElementById('scoreCircle');
 const scoreProgress = document.getElementById('scoreProgress');
 const scoreValue = document.getElementById('scoreValue');
@@ -110,7 +118,7 @@ async function processFile(file) {
     fileInfo.style.display = 'flex';
     dropZone.style.display = 'none';
 
-    showLoading();
+    showLoading('Analysing your resume...');
     try {
         const formData = new FormData();
         formData.append('file', file);
@@ -124,6 +132,15 @@ async function processFile(file) {
 
         if (data.success) {
             state.resumeSkills = data.skills;
+
+            // Persist the full upload response so navigation never requires a re-upload
+            currentResumeData = {
+                skills: data.skills,
+                text: data.text || null,
+                chatbotContext: data.chatbotContext || null,
+                filename: file.name
+            };
+
             // Store chatbot context extracted from resume
             if (typeof chatbotContext !== 'undefined') {
                 chatbotContext = data.chatbotContext || null;
@@ -141,13 +158,49 @@ async function processFile(file) {
 }
 
 function clearFile() {
-    /** Resets the file upload state and UI. */
+    /**
+     * Resets the file-upload UI and clears ALL resume state, including the
+     * persisted data. Called only when the user explicitly removes their file.
+     */
     state.uploadedFile = null;
     state.resumeSkills = [];
+    currentResumeData = null;   // Full reset — user wants to start fresh
     fileInput.value = '';
     fileInfo.style.display = 'none';
     dropZone.style.display = 'block';
     checkAnalyzeButton();
+}
+
+/**
+ * Re-hydrates the file-info bar from the persisted resume data without
+ * triggering a new upload. Called whenever the user navigates "Back".
+ */
+function restoreResumeState() {
+    if (!currentResumeData) return;
+    state.resumeSkills = currentResumeData.skills;
+    if (typeof chatbotContext !== 'undefined') {
+        chatbotContext = currentResumeData.chatbotContext;
+    }
+    // Show the file-info chip
+    fileName.textContent = currentResumeData.filename;
+    fileInfo.style.display = 'flex';
+    dropZone.style.display = 'none';
+    // Mark uploadedFile as truthy so button-enable logic works
+    state.uploadedFile = { name: currentResumeData.filename };
+    checkAnalyzeButton();
+}
+
+/**
+ * Central "Back" navigation: collapses all result screens and returns the
+ * user to the domain-input step, restoring the already-uploaded resume state.
+ */
+function navigateToInput() {
+    resultsSection.style.display = 'none';
+    confusedSection.style.display = 'none';
+    detailedCareerView.style.display = 'none';
+    inputSection.style.display = 'block';
+    restoreResumeState();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // New DOM Elements for Confused Feature
@@ -182,7 +235,7 @@ async function performAnalysis() {
         return;
     }
 
-    showLoading();
+    showLoading('Analysing your career trajectory...');
     try {
         const response = await fetch(`${API_BASE}/analyze`, {
             method: 'POST',
@@ -214,7 +267,7 @@ async function fetchConfusedResults() {
     /** Retrieves alternative career path match results from the server. */
     if (state.resumeSkills.length === 0) return;
 
-    showLoading();
+    showLoading('Generating your potential career paths...');
     try {
         const response = await fetch(`${API_BASE}/confused`, {
             method: 'POST',
@@ -374,11 +427,8 @@ backToCardsBtn.addEventListener('click', () => {
     confusedSection.style.display = 'block';
 });
 
-resetConfusedBtn.addEventListener('click', () => {
-    confusedSection.style.display = 'none';
-    inputSection.style.display = 'block';
-    clearFile();
-});
+// resetConfusedBtn listener is defined in the "Reset handler" block below.
+// This prevents duplicate binding — the central navigateToInput() handles it.
 
 function updateScoreCircle(score) {
     const s = parseFloat(score);
@@ -554,25 +604,20 @@ function renderWavyRoadmap(allSkillsByTier, domain, containerId) {
     container.appendChild(wrapper);
 }
 
-// Reset handler
+// "Back" handler from Analysis results — returns to domain input, resume stays loaded
 resetBtn.addEventListener('click', () => {
-    state.resumeSkills = [];
-    state.uploadedFile = null;
-    state.analysisResult = null;
-    clearFile();
-    domainInput.value = '';
-    resultsSection.style.display = 'none';
-    confusedSection.style.display = 'none';
-    detailedCareerView.style.display = 'none';
-    inputSection.style.display = 'block';
-    if (skillChart) {
-        skillChart.destroy();
-        skillChart = null;
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateToInput();
 });
 
-function showLoading() { loadingOverlay.style.display = 'flex'; }
+// "Back" handler from Career Path cards — returns to domain input, resume stays loaded
+resetConfusedBtn.addEventListener('click', () => {
+    navigateToInput();
+});
+
+function showLoading(message) {
+    loadingText.textContent = message || 'Loading...';
+    loadingOverlay.style.display = 'flex';
+}
 function hideLoading() { loadingOverlay.style.display = 'none'; }
 
 domainInput.addEventListener('keypress', (e) => {
