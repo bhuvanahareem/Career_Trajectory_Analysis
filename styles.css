@@ -2061,3 +2061,215 @@ body {
     .sp-download-wrapper { padding: 1.2rem 1.5rem 2rem; }
 }
 
+/* ==========================================================================
+   DOMAIN ERROR MODAL
+   Palette: Crimson #B53325 · Ivory #F4E2CE · Gold #DFBC94
+   Intentionally contrasts with the main sage/olive UI to signal error state.
+   ========================================================================== */
+
+/* ── Field inline error ring ──────────────────────────────────────────────── */
+.domain-input--error {
+    border-color: #B53325 !important;
+    box-shadow: 0 0 0 3px rgba(181, 51, 37, 0.18) !important;
+    animation: errorShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes errorShake {
+    0%,  100% { transform: translateX(0); }
+    15%        { transform: translateX(-6px); }
+    30%        { transform: translateX(5px); }
+    45%        { transform: translateX(-4px); }
+    60%        { transform: translateX(3px); }
+    75%        { transform: translateX(-2px); }
+}
+
+/* ── Overlay backdrop ─────────────────────────────────────────────────────── */
+.domain-error-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+
+    /* Warm ivory tint + blur for depth */
+    background: rgba(244, 226, 206, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    /* Hidden by default; revealed via JS class toggle */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.domain-error-overlay--visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+/* ── Modal card ───────────────────────────────────────────────────────────── */
+.domain-error-card {
+    position: relative;
+    background: #F4E2CE;
+    border: 2px solid #DFBC94;
+    border-radius: 20px;
+    padding: 3rem 2.5rem 2.5rem;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow:
+        0 0 0 1px rgba(181, 51, 37, 0.08),
+        0 24px 60px rgba(181, 51, 37, 0.18),
+        0 8px 20px rgba(0, 0, 0, 0.08);
+
+    /* Slide-up entrance; driven by overlay visibility toggle */
+    transform: translateY(28px) scale(0.96);
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+/* Top crimson accent shimmer bar */
+.domain-error-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #B53325 0%, #DFBC94 50%, #B53325 100%);
+    background-size: 200% 100%;
+    animation: shimmerBar 2.5s linear infinite;
+}
+
+@keyframes shimmerBar {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.domain-error-overlay--visible .domain-error-card {
+    transform: translateY(0) scale(1);
+}
+
+/* ── Warning icon ─────────────────────────────────────────────────────────── */
+.domain-error-icon {
+    font-size: 3.5rem;
+    line-height: 1;
+    margin-bottom: 1rem;
+    color: #B53325;
+    filter: drop-shadow(0 2px 6px rgba(181, 51, 37, 0.25));
+    animation: iconPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1);    opacity: 1; }
+    50%       { transform: scale(1.08); opacity: 0.85; }
+}
+
+/* ── Title ────────────────────────────────────────────────────────────────── */
+.domain-error-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #B53325;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+/* ── Message text ─────────────────────────────────────────────────────────── */
+.domain-error-message {
+    font-size: 0.975rem;
+    color: #5c3a2e;
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+/* ── Suggestion chips ─────────────────────────────────────────────────────── */
+.domain-error-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2rem;
+    font-size: 0.85rem;
+    color: #7a5038;
+}
+
+.domain-suggestion-chip {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    background: #DFBC94;
+    color: #3d1f10;
+    border: 1px solid rgba(181, 51, 37, 0.25);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    user-select: none;
+}
+
+.domain-suggestion-chip:hover {
+    background: #B53325;
+    color: #F4E2CE;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(181, 51, 37, 0.3);
+}
+
+/* ── Try Again button ─────────────────────────────────────────────────────── */
+.domain-error-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.9rem 2.4rem;
+    background: #B53325;
+    color: #F4E2CE;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'IBM Plex Sans', sans-serif;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.domain-error-btn:hover {
+    background: #8f2419;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(181, 51, 37, 0.4);
+}
+
+.domain-error-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.domain-error-btn:focus-visible {
+    outline: 3px solid #DFBC94;
+    outline-offset: 3px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .domain-error-card {
+        padding: 2.5rem 1.5rem 2rem;
+        border-radius: 16px;
+    }
+    .domain-error-title { font-size: 1.35rem; }
+    .domain-error-icon  { font-size: 2.8rem; }
+}
+
+/* ── Reduced motion: disable all entrance animations ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .domain-error-card         { transition: none; }
+    .domain-error-icon         { animation: none; }
+    .domain-error-card::before { animation: none; }
+    .domain-input--error       { animation: none; }
+}
+

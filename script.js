@@ -235,6 +235,9 @@ async function performAnalysis() {
         return;
     }
 
+    // Clear any previous field-error styling
+    domainInput.classList.remove('domain-input--error');
+
     showLoading('Analysing your career trajectory...');
     try {
         const response = await fetch(`${API_BASE}/analyze`, {
@@ -250,6 +253,14 @@ async function performAnalysis() {
 
         const data = await response.json();
 
+        // --- Domain validation gate ---
+        if (!response.ok && data.error === 'domain_not_found') {
+            hideLoading();
+            showDomainErrorModal(data.message);
+            domainInput.classList.add('domain-input--error');
+            return;
+        }
+
         if (data.error) {
             throw new Error(data.error);
         }
@@ -262,6 +273,95 @@ async function performAnalysis() {
         hideLoading();
     }
 }
+
+// ==============================================
+// DOMAIN ERROR MODAL
+// ==============================================
+
+/**
+ * Injects (once) and shows the branded domain-not-found error modal.
+ * Uses the crimson/ivory/gold palette to signal error state clearly,
+ * distinct from the main sage/olive UI so the user cannot miss it.
+ */
+function showDomainErrorModal(message) {
+    // Build the modal once; reuse it on subsequent errors
+    let overlay = document.getElementById('domainErrorOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'domainErrorOverlay';
+        overlay.className = 'domain-error-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'domainErrorTitle');
+
+        overlay.innerHTML = `
+            <div class="domain-error-card" id="domainErrorCard">
+                <div class="domain-error-icon" aria-hidden="true">&#9888;</div>
+                <h2 class="domain-error-title" id="domainErrorTitle">Domain Not Recognised</h2>
+                <p class="domain-error-message" id="domainErrorMessage"></p>
+                <div class="domain-error-suggestions">
+                    <span>Try: </span>
+                    <span class="domain-suggestion-chip">Data Analyst</span>
+                    <span class="domain-suggestion-chip">DevOps Engineer</span>
+                    <span class="domain-suggestion-chip">UX Designer</span>
+                    <span class="domain-suggestion-chip">AI Engineer</span>
+                </div>
+                <button class="domain-error-btn" id="domainErrorCloseBtn">
+                    Try Again &#8617;
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        // Close on Try Again button
+        document.getElementById('domainErrorCloseBtn').addEventListener('click', closeDomainErrorModal);
+
+        // Close on backdrop click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeDomainErrorModal();
+        });
+
+        // Clicking a suggestion chip populates the domain input
+        overlay.querySelectorAll('.domain-suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                domainInput.value = chip.textContent;
+                domainInput.classList.remove('domain-input--error');
+                closeDomainErrorModal();
+            });
+        });
+    }
+
+    // Update the message text for this specific error
+    document.getElementById('domainErrorMessage').textContent = message;
+
+    // Show
+    overlay.classList.add('domain-error-overlay--visible');
+    document.body.style.overflow = 'hidden';
+
+    // Focus the close button for accessibility
+    requestAnimationFrame(() => {
+        document.getElementById('domainErrorCloseBtn').focus();
+    });
+}
+
+function closeDomainErrorModal() {
+    const overlay = document.getElementById('domainErrorOverlay');
+    if (overlay) overlay.classList.remove('domain-error-overlay--visible');
+    document.body.style.overflow = '';
+    // Re-focus and highlight the domain input so the user can correct it
+    domainInput.focus();
+    domainInput.select();
+}
+
+// Close on Escape key — registered once at the document level
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const overlay = document.getElementById('domainErrorOverlay');
+        if (overlay && overlay.classList.contains('domain-error-overlay--visible')) {
+            closeDomainErrorModal();
+        }
+    }
+});
 
 async function fetchConfusedResults() {
     /** Retrieves alternative career path match results from the server. */

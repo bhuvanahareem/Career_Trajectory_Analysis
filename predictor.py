@@ -7,6 +7,7 @@ import os # OS utilities for environment and paths
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" # Prevent duplicate library execution errors
 import re # regex for skill extraction
 import json # metadata parsing
+import difflib # Built-in fuzzy string similarity — no extra install needed
 import torch # Main deep learning framework
 from transformers import BertTokenizer, BertForSequenceClassification # BERT model and tokenizer
 
@@ -37,6 +38,127 @@ CAREER_METADATA = {
     "Engineering Manager": "Leads and mentors technical teams to deliver high-quality software while fostering growth.",
     "BI Analyst": "Transforms data into strategic business intelligence through dashboards and reporting."
 }
+
+# ---------------------------------------------------------------------------
+# INPUT VALIDATION LAYER
+# ---------------------------------------------------------------------------
+
+# Minimum confidence required to accept a user-supplied domain string.
+# Below this threshold the pipeline aborts and returns INVALID_DOMAIN.
+DOMAIN_SIMILARITY_THRESHOLD = 0.45
+
+# Common shorthand aliases — resolved before fuzzy matching
+_ALIAS_MAP = {
+    "data scientist": "AI and Data Scientist",
+    "data science": "AI and Data Scientist",
+    "web developer": "Full Stack Developer",
+    "ml engineer": "AI Engineer",
+    "devops": "DevOps Engineer",
+    "cybersec": "Cyber Security",
+    "cyber security": "Cyber Security",
+    "cybersecurity": "Cyber Security",
+    "qa": "QA (Quality Assurance)",
+    "quality assurance": "QA (Quality Assurance)",
+    "machine learning": "Machine Learning",
+    "ml": "Machine Learning",
+    "bi": "BI Analyst",
+    "business intelligence": "BI Analyst",
+    "product manager": "Product Manager",
+    "pm": "Product Manager",
+    "android": "Android Developer",
+    "ios": "iOS Developer",
+    "blockchain": "Blockchain Developer",
+    "game dev": "Game Developer",
+    "game developer": "Game Developer",
+    "mlops": "MLOps Engineer",
+    "devsecops": "DevSecOps Engineer",
+    "software architect": "Software Architect",
+    "ux": "UX Designer",
+    "ux designer": "UX Designer",
+    "technical writer": "Technical Writer",
+    "tech writer": "Technical Writer",
+    "data engineer": "Data Engineer",
+    "data analyst": "Data Analyst",
+    "ai engineer": "AI Engineer",
+    "frontend": "Frontend Developer",
+    "frontend developer": "Frontend Developer",
+    "backend": "Backend Developer",
+    "backend developer": "Backend Developer",
+    "full stack": "Full Stack Developer",
+    "fullstack": "Full Stack Developer",
+    "engineering manager": "Engineering Manager",
+}
+
+
+def validate_domain_input(target_domain: str) -> dict:
+    """
+    Validates whether a user-supplied career domain string is recognisable.
+
+    Three-stage pipeline (short-circuits on first match):
+      1. Alias map — exact pre-defined shorthands (e.g. 'devops', 'qa').
+      2. Substring check — input is contained in any known domain key.
+      3. Fuzzy ratio — difflib.SequenceMatcher against all domain keys;
+         accepts if best ratio >= DOMAIN_SIMILARITY_THRESHOLD (0.45).
+
+    Returns:
+        dict with keys:
+          - valid (bool)
+          - matched_domain (str | None)  — canonical domain name when valid
+          - score (float)                — best similarity score (0.0–1.0)
+          - error (str | None)           — 'INVALID_DOMAIN' when invalid
+    """
+    if not target_domain or not target_domain.strip():
+        return {"valid": False, "matched_domain": None, "score": 0.0, "error": "INVALID_DOMAIN"}
+
+    normalised = target_domain.lower().strip()
+    known_domains = list(CAREER_METADATA.keys())
+
+    # ── Stage 1: Alias map (exact) ────────────────────────────────────────────
+    if normalised in _ALIAS_MAP:
+        return {
+            "valid": True,
+            "matched_domain": _ALIAS_MAP[normalised],
+            "score": 1.0,
+            "error": None,
+        }
+
+    # ── Stage 2: Substring containment ───────────────────────────────────────
+    for domain in known_domains:
+        if normalised in domain.lower():
+            return {
+                "valid": True,
+                "matched_domain": domain,
+                "score": 1.0,
+                "error": None,
+            }
+
+    # ── Stage 3: Fuzzy similarity ratio ──────────────────────────────────────
+    best_score = 0.0
+    best_domain = None
+    for domain in known_domains:
+        ratio = difflib.SequenceMatcher(
+            None, normalised, domain.lower()
+        ).ratio()
+        if ratio > best_score:
+            best_score = ratio
+            best_domain = domain
+
+    if best_score >= DOMAIN_SIMILARITY_THRESHOLD:
+        return {
+            "valid": True,
+            "matched_domain": best_domain,
+            "score": round(best_score, 4),
+            "error": None,
+        }
+
+    # ── Below threshold — reject ──────────────────────────────────────────────
+    return {
+        "valid": False,
+        "matched_domain": None,
+        "score": round(best_score, 4),
+        "error": "INVALID_DOMAIN",
+    }
+
 
 class CareerPredictor:
     """Class to handle career prediction and skill gap analysis using a BERT model."""
@@ -75,33 +197,51 @@ class CareerPredictor:
         
         return list(set(required)) # Remove duplicates
 
-    def get_best_category(self, target_domain):
-        """Maps user input to a canonical domain name from the trained knowledge."""
+    def get_best_category(self, target_domain, pre_validated_domain=None):
+        """
+        Maps user input to a canonical domain name from the trained knowledge.
+
+        If pre_validated_domain is provided (from validate_domain_input), it is
+        used directly — skipping the lookup entirely for consistency.
+        """
+        if pre_validated_domain:
+            return pre_validated_domain
+
+        # Fallback path (should not normally be reached after validation)
         target = target_domain.lower().strip()
-        
-        # Common alias mapping
-        mapping = {
-            "data scientist": "AI and Data Scientist",
-            "data science": "AI and Data Scientist",
-            "web developer": "Full Stack Developer",
-            "ml engineer": "AI Engineer",
-            "devops": "DevOps Engineer",
-            "cybersec": "Cyber Security",
-            "qa": "QA (Quality Assurance)"
-        }
-        if target in mapping: return mapping[target]
-        
-        # Check against available domains in metadata
+        if target in _ALIAS_MAP:
+            return _ALIAS_MAP[target]
+
         available_domains = self.structured_data.keys()
         for domain in available_domains:
             if target in domain.lower():
                 return domain
-                
-        return "Full Stack Developer" # Default fallback
 
-    def analyze(self, resume_skills, target_domain):
-        """Compares user skills against target requirements to calculate match scores."""
-        category_key = self.get_best_category(target_domain)
+        return "Full Stack Developer"  # Last-resort default (post-validation this path is rare)
+
+    def analyze(self, resume_skills, target_domain, pre_validated_domain=None):
+        """
+        Compares user skills against target requirements to calculate match scores.
+
+        Args:
+            resume_skills: List of skills extracted from the user's resume.
+            target_domain: Raw domain string supplied by the user.
+            pre_validated_domain: Canonical domain name from validate_domain_input().
+                                  When provided, skips the internal lookup.
+
+        Raises:
+            ValueError("INVALID_DOMAIN") if validation has not been performed
+            upstream and the raw input fails the similarity check.
+        """
+        # Guard: if no pre-validated domain was passed, run validation now.
+        # This provides a safety net even if called directly (e.g. from tests).
+        if not pre_validated_domain:
+            validation = validate_domain_input(target_domain)
+            if not validation["valid"]:
+                raise ValueError("INVALID_DOMAIN")
+            pre_validated_domain = validation["matched_domain"]
+
+        category_key = self.get_best_category(target_domain, pre_validated_domain)
         all_required = self.get_model_required_skills(category_key)
         
         resume_skills_lower = [s.lower() for s in resume_skills]
@@ -213,7 +353,9 @@ class CareerPredictor:
         
         return sorted(results, key=lambda x: x['score'], reverse=True)
 
-# Bridge for app.py
+# ---------------------------------------------------------------------------
+# Module-level bridge functions for app.py
+# ---------------------------------------------------------------------------
 predictor_instance = CareerPredictor()
 
 def extract_skills_from_text(text):
@@ -237,9 +379,12 @@ def extract_skills_from_text(text):
                 break
     return list(found_skills)
 
-def analyze_skill_gap(resume_skills, target_domain):
-    """Wrapper function to perform skill gap analysis for a specific target domain."""
-    return predictor_instance.analyze(resume_skills, target_domain)
+def analyze_skill_gap(resume_skills, target_domain, pre_validated_domain=None):
+    """
+    Wrapper: performs skill-gap analysis for a specific target domain.
+    Pass pre_validated_domain from validate_domain_input() to avoid double-validation.
+    """
+    return predictor_instance.analyze(resume_skills, target_domain, pre_validated_domain)
 
 def analyze_confused_paths(resume_skills):
     """Wrapper function to find alternative career paths for the user's skills."""

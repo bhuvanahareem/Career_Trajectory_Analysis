@@ -22,7 +22,7 @@ print(f"DEBUG: Groq Key found: {os.getenv('GROQ_API_KEY')[:5] if os.getenv('GROQ
 print(f"DEBUG: YouTube Key found: {os.getenv('YOUTUBE_API_KEY')[:8] if os.getenv('YOUTUBE_API_KEY') else 'NOT SET – will use static fallback'}")
 
 # --- IMPORT YOUR TRAINED AI LOGIC ---
-from predictor import analyze_skill_gap, extract_skills_from_text, analyze_confused_paths, CAREER_METADATA
+from predictor import analyze_skill_gap, extract_skills_from_text, analyze_confused_paths, CAREER_METADATA, validate_domain_input
 from extract_data import extract_chatbot_context
 from study_plan import ResourceBroker
 
@@ -94,10 +94,37 @@ def analyze_career():
     # These are the skills returned by the upload route
     user_skills = data.get('skills', [])
     target_job = data.get('domain', '').strip()
-    
+
+    # --- INPUT VALIDATION GUARDRAIL ---
+    # Reject gibberish / unrecognised domains before touching the AI model.
+    validation = validate_domain_input(target_job)
+    if not validation["valid"]:
+        logging.warning(
+            f"[VALIDATION REJECTED] Input: '{target_job}' "
+            f"| Best similarity: {validation['score']:.4f} "
+            f"| Threshold: 0.45"
+        )
+        return jsonify({
+            "error": "domain_not_found",
+            "message": (
+                f"\u201c{target_job}\u201d is not a recognised career domain. "
+                "Please enter a valid tech career path (e.g. \"Data Analyst\", "
+                "\"DevOps Engineer\", \"UX Designer\")."
+            ),
+            "similarity": validation["score"]
+        }), 400
+
+    # Pass the canonical matched domain so the model uses the exact key.
+    pre_validated_domain = validation["matched_domain"]
+    logging.info(
+        f"[VALIDATION PASSED] Input: '{target_job}' "
+        f"\u2192 Matched: '{pre_validated_domain}' "
+        f"| Score: {validation['score']:.4f}"
+    )
+
     # --- USE THE TRAINED AI ENGINE ---
-    analysis = analyze_skill_gap(user_skills, target_job)
-    
+    analysis = analyze_skill_gap(user_skills, target_job, pre_validated_domain)
+
     return jsonify({
         'score': round(float(analysis['score']), 2),
         'status_text': analysis['status_text'],
