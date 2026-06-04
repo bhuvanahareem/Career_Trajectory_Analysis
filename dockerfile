@@ -1,21 +1,19 @@
-# Use an official Python runtime as a parent image
 FROM python:3.10-slim
-
-# Set the working directory in the container
 WORKDIR /code
 
-# Copy the requirements file into the container
+# Copy requirements first to leverage Docker caching
 COPY ./requirements.txt /code/requirements.txt
 
-# Install dependencies and download the SpaCy model
+# Install dependencies and download SpaCy model
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt \
     && python -m spacy download en_core_web_sm
 
-# Copy the rest of the application code into the container
+# Copy the rest of your application code
 COPY . .
 
-# Expose port 7860 (Hugging Face Spaces requires port 7860)
-EXPOSE 7860
+# NEW STEP: Run your fine-tuning script to generate the model folder on the cloud
+# (Replace 'trainer.py' with the exact name of your fine-tuning script file)
+RUN python trainer.py
 
-# Start the Flask app using Gunicorn on port 7860
+EXPOSE 7860
 CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:7860", "--workers", "1", "--timeout", "120"]
