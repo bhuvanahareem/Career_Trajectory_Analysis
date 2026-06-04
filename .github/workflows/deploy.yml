@@ -15,4 +15,4 @@ jobs:
       - name: Push to HF Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://bhuuuuu:$HF_TOKEN@huggingface.co/spaces/bhuuuuu/Career-Trajectory-Analysis main
+        run: git push --force https://bhuuuuu:$HF_TOKEN@huggingface.co/spaces/bhuuuuu/Career-Trajectory-Analysis main:main
