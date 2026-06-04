@@ -1,3 +1,12 @@
+---
+title: Career Trajectory Analysis
+emoji: 🚀
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # Career Trajectory Prediction & Analysis System
 
 An AI-driven career path analysis tool that evaluates a user's resume against a target job domain using NLP and machine learning to dynamically calculate skill gaps and provide visual roadmaps.
